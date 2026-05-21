@@ -1,5 +1,7 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+export const dynamic = 'force-dynamic'
+
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -28,7 +30,7 @@ const ORDER_STATUS: Record<string, {
 
 const STEPS = ['en_attente', 'confirme', 'en_preparation', 'en_route', 'livre']
 
-export default function CommandePage() {
+function CommandeContent() {
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const newOrderId = searchParams.get('new') ? parseInt(searchParams.get('new')!) : null
@@ -178,6 +180,14 @@ export default function CommandePage() {
         />
       )}
     </div>
+  )
+}
+
+export default function CommandePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F8FAFB] flex items-center justify-center"><div className="w-7 h-7 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>}>
+      <CommandeContent />
+    </Suspense>
   )
 }
 

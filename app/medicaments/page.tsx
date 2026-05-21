@@ -1,5 +1,7 @@
 'use client'
-import { useState, useEffect } from 'react'
+export const dynamic = 'force-dynamic'
+
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -10,7 +12,7 @@ import { Search, ShoppingBag, CheckCircle, X, Plus, Minus, Loader2, ChevronLeft 
 
 const CATEGORIES = ['Tous', 'Analgésique', 'Antibiotique', 'Antipaludique', 'Gastro-entérologie', 'Antidiabétique', 'Anti-inflammatoire', 'Vitamine', 'Antihypertenseur', 'Antihistaminique', 'Respiratoire']
 
-export default function MedicamentsPage() {
+function MedicamentsContent() {
   const searchParams = useSearchParams()
   const pharmacyIdParam = searchParams.get('pharmacy')
   const pharmacyId = pharmacyIdParam ? parseInt(pharmacyIdParam) : null
@@ -284,5 +286,13 @@ export default function MedicamentsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function MedicamentsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-paper flex items-center justify-center"><div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" /></div>}>
+      <MedicamentsContent />
+    </Suspense>
   )
 }
