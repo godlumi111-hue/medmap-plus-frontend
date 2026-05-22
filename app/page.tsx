@@ -205,7 +205,7 @@ export default function HomePage() {
         <div className="absolute inset-y-0 right-0 w-full lg:w-[55%]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=1400&auto=format&fit=crop&q=85"
+            src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=1400&auto=format&fit=crop&q=85"
             alt="Médecin africain souriant avec un patient"
             className="w-full h-full object-cover"
             loading="eager"
