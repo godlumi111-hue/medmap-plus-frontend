@@ -97,16 +97,16 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ id: s
       walletApi.me().catch(() => null),
     ]).then(([structures, w]) => {
       const hospitalNom = hospital.nom.toLowerCase().trim()
+      console.log('[hospital] structures reçues:', structures.length, 'pour', hospital.nom, '| medmap_email:', hospital.medmap_email)
       const match = structures.find((s: any) => {
-        // Primary: match by linked medmap account email (most reliable)
         if (hospital.medmap_email && s.structure?.email === hospital.medmap_email) return true
-        // Fallback: match by structure name
         const sNom = (s.nom || s.structure?.nom || '').toLowerCase().trim()
         return sNom === hospitalNom
       })
+      console.log('[hospital] match trouvé:', match ? `structure_id=${match.structure_id ?? match.id}` : 'AUCUN')
       if (match) setDbStructureId(match.structure_id ?? match.id)
       if (w) setWalletSolde(parseFloat(w.solde || 0))
-    }).catch(() => {})
+    }).catch((e) => console.error('[hospital] erreur fetch structures:', e))
   }, [hospital])
 
   useEffect(() => {
