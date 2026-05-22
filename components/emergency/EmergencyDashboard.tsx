@@ -313,28 +313,28 @@ export default function EmergencyDashboard({ config }: { config: RoleConfig }) {
       />
 
       {/* Photo Hero */}
-      <div className="pt-16 relative overflow-hidden" style={{ minHeight: 200 }}>
+      <div className="pt-16 relative overflow-hidden" style={{ minHeight: 260 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/images/samu.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-950/97 via-gray-900/90 to-gray-900/55" />
-        <div className="relative max-w-5xl mx-auto px-4 py-8 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/10 border border-white/25 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl">{emoji}</div>
-            <div>
-              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Centre opérationnel</p>
-              <h1 className="text-white font-black text-2xl" style={{ fontFamily: 'Sora, sans-serif' }}>{label}</h1>
-              <p className="text-gray-300 text-sm mt-0.5">{user?.prenom} {user?.nom}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className={`flex items-center gap-1.5 px-4 py-2 ${accent.indicatorBg} border rounded-xl`}>
+        {/* Overlay sombre fort à gauche, transparent à droite */}
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-950/90 to-gray-900/40" />
+        {/* Ligne de couleur en haut */}
+        <div className={`absolute top-0 left-0 right-0 h-1 ${accent.progressBar}`} />
+        <div className="relative max-w-5xl mx-auto px-6 py-10 flex items-end justify-between h-full" style={{ minHeight: 260 }}>
+          <div>
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 ${accent.indicatorBg} border rounded-full mb-4`}>
               <div className={`w-2 h-2 ${accent.indicatorDot} rounded-full animate-pulse`} />
-              <span className={`${accent.indicatorText} text-xs font-bold`}>EN SERVICE</span>
+              <span className={`${accent.indicatorText} text-xs font-bold uppercase tracking-widest`}>EN SERVICE</span>
             </div>
-            <button onClick={load} className="p-2 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-colors">
-              <RefreshCw className="w-4 h-4 text-gray-300" />
-            </button>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="text-4xl">{emoji}</div>
+              <h1 className="text-white font-black text-3xl lg:text-4xl leading-tight" style={{ fontFamily: 'Sora, sans-serif' }}>{label}</h1>
+            </div>
+            <p className="text-gray-400 text-sm">{user?.prenom} {user?.nom} · Opérateur connecté</p>
           </div>
+          <button onClick={load} className="p-3 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-colors flex-shrink-0 self-end">
+            <RefreshCw className="w-5 h-5 text-gray-300" />
+          </button>
         </div>
       </div>
 

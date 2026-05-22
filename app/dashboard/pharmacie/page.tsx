@@ -132,47 +132,48 @@ export default function PharmacieDashboard() {
       <Navbar />
       <div className="pt-16">
 
-        {/* Hero */}
-        <div className="relative py-10 px-4 text-white overflow-hidden" style={{ minHeight: 200 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/pharmatie.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/95 via-teal-900/88 to-cyan-900/60" />
-          <div className="max-w-5xl mx-auto relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">💊</span>
-                <p className="text-white/70 text-sm font-medium">Espace Pharmacie</p>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold" style={{ fontFamily: 'Sora, sans-serif' }}>{pharmacyName}</h1>
-              <div className="flex flex-wrap gap-2 mt-3">
-                {profile?.ville && (
-                  <span className="flex items-center gap-1.5 text-xs bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 font-semibold">
-                    <MapPin className="w-3.5 h-3.5" /> {profile.ville}
-                  </span>
-                )}
-                {profile?.telephone && (
-                  <span className="flex items-center gap-1.5 text-xs bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 font-semibold">
-                    <Phone className="w-3.5 h-3.5" /> {profile.telephone}
-                  </span>
-                )}
-                {newCount > 0 && (
-                  <span className="flex items-center gap-1.5 text-xs bg-red-500/80 rounded-full px-3 py-1 font-bold animate-pulse">
-                    🔔 {newCount} nouvelle{newCount > 1 ? 's' : ''} commande{newCount > 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
+        {/* Hero — split éditorial */}
+        <div className="relative bg-white border-b border-gray-100 overflow-hidden" style={{ minHeight: 230 }}>
+          {/* Photo droite */}
+          <div className="absolute inset-y-0 right-0 w-1/2 hidden lg:block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/pharmatie.jpg" alt="" className="w-full h-full object-cover object-center" />
+            <div className="absolute inset-0 bg-gradient-to-l from-transparent to-white" />
+          </div>
+          {/* Contenu gauche */}
+          <div className="relative max-w-5xl mx-auto px-6 py-8 lg:py-10">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1 h-5 bg-emerald-600 rounded-full" />
+              <p className="text-emerald-700 text-xs font-bold uppercase tracking-widest">Espace Pharmacie</p>
             </div>
-
+            <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-3" style={{ fontFamily: 'Sora, sans-serif' }}>{pharmacyName}</h1>
+            <div className="flex flex-wrap gap-2 mb-6">
+              {profile?.ville && (
+                <span className="flex items-center gap-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full px-3 py-1.5 font-semibold">
+                  <MapPin className="w-3.5 h-3.5" /> {profile.ville}
+                </span>
+              )}
+              {profile?.telephone && (
+                <span className="flex items-center gap-1.5 text-xs bg-gray-50 text-gray-600 border border-gray-200 rounded-full px-3 py-1.5 font-semibold">
+                  <Phone className="w-3.5 h-3.5" /> {profile.telephone}
+                </span>
+              )}
+              {newCount > 0 && (
+                <span className="flex items-center gap-1.5 text-xs bg-red-50 text-red-700 border border-red-200 rounded-full px-3 py-1.5 font-bold animate-pulse">
+                  🔔 {newCount} nouvelle{newCount > 1 ? 's' : ''} commande{newCount > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
             {/* Garde toggle */}
-            <div className="flex items-center gap-3 bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl px-4 py-3 self-start sm:self-auto">
-              <Moon className={`w-4 h-4 ${garde ? 'text-yellow-300' : 'text-white/50'}`} />
+            <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 w-fit">
+              <Moon className={`w-4 h-4 ${garde ? 'text-amber-500' : 'text-gray-400'}`} />
               <div>
-                <p className="text-sm font-bold">{garde ? 'De garde' : 'Hors garde'}</p>
-                <p className="text-[11px] text-white/70">{garde ? 'Ouvert 24h/24' : 'Horaires normaux'}</p>
+                <p className="text-sm font-bold text-gray-900">{garde ? 'De garde' : 'Hors garde'}</p>
+                <p className="text-[11px] text-gray-500">{garde ? 'Ouvert 24h/24' : 'Horaires normaux'}</p>
               </div>
               <button
                 onClick={() => setGarde(!garde)}
-                className={`w-11 h-6 rounded-full transition-all relative flex-shrink-0 ${garde ? 'bg-yellow-400' : 'bg-white/30'}`}
+                className={`w-11 h-6 rounded-full transition-all relative flex-shrink-0 ${garde ? 'bg-amber-400' : 'bg-gray-300'}`}
               >
                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${garde ? 'left-6' : 'left-1'}`} />
               </button>
@@ -180,32 +181,26 @@ export default function PharmacieDashboard() {
           </div>
         </div>
 
-        <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: 'Nouvelles', value: loading ? '…' : String(newCount), sub: 'en attente', icon: AlertCircle, grad: 'from-amber-500 to-orange-500' },
-              { label: 'En cours', value: loading ? '…' : String(inProgressCount), sub: 'préparation/route', icon: Clock, grad: 'from-blue-500 to-indigo-500' },
-              { label: 'Livrées', value: loading ? '…' : String(deliveredCount), sub: 'au total', icon: CheckCircle, grad: 'from-emerald-500 to-teal-500' },
-              { label: 'Solde', value: loading ? '…' : `${solde.toLocaleString('fr-FR')} F`, sub: 'FCFA disponible', icon: WalletIcon, grad: 'from-violet-500 to-purple-500' },
-            ].map((s, i) => (
-              <motion.div
-                key={s.label}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07 }}
-                className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm"
-              >
-                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${s.grad} flex items-center justify-center text-white mb-3`}>
-                  <s.icon className="w-4 h-4" />
+        {/* Stats bandeau */}
+        <div className="bg-white border-b border-gray-100 shadow-sm">
+          <div className="max-w-5xl mx-auto px-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-gray-100">
+              {[
+                { label: 'Nouvelles commandes', value: loading ? '…' : String(newCount), accent: 'text-amber-600' },
+                { label: 'En cours', value: loading ? '…' : String(inProgressCount), accent: 'text-blue-600' },
+                { label: 'Livrées', value: loading ? '…' : String(deliveredCount), accent: 'text-emerald-600' },
+                { label: 'Solde FCFA', value: loading ? '…' : `${solde.toLocaleString('fr-FR')} F`, accent: 'text-violet-600' },
+              ].map(s => (
+                <div key={s.label} className="py-4 px-4 sm:px-6 text-center">
+                  <p className={`text-2xl font-extrabold ${s.accent}`} style={{ fontFamily: 'Sora, sans-serif' }}>{s.value}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 font-medium">{s.label}</p>
                 </div>
-                <p className="text-xl font-bold text-gray-900" style={{ fontFamily: 'Sora, sans-serif' }}>{s.value}</p>
-                <p className="text-xs font-semibold text-gray-600 mt-0.5">{s.label}</p>
-                <p className="text-xs text-gray-400">{s.sub}</p>
-              </motion.div>
-            ))}
+              ))}
+            </div>
           </div>
+        </div>
+
+        <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

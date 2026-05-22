@@ -372,70 +372,66 @@ export default function CliniqueHopitalDashboard() {
     <div className="min-h-screen bg-[#F8FAFB]">
       <Navbar />
       <div className="pt-16">
-        {/* Header */}
-        <div className="relative text-white overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/equipe.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
-          <div className="absolute inset-0 bg-gradient-to-r from-indigo-950/95 via-violet-900/88 to-purple-900/65" />
-          <div className="max-w-7xl mx-auto px-4 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                  <Hospital className="w-6 h-6 text-white" />
+        {/* Header — split éditorial */}
+        <div className="relative bg-white border-b border-gray-100 overflow-hidden" style={{ minHeight: 220 }}>
+          {/* Photo droite */}
+          <div className="absolute inset-y-0 right-0 w-2/5 hidden lg:block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/equipe.jpg" alt="" className="w-full h-full object-cover object-center" />
+            <div className="absolute inset-0 bg-gradient-to-l from-transparent to-white" />
+          </div>
+          {/* Contenu gauche */}
+          <div className="relative max-w-7xl mx-auto px-6 py-8 lg:py-10">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-1 h-5 bg-indigo-600 rounded-full" />
+                  <p className="text-indigo-700 text-xs font-bold uppercase tracking-widest">Gestion Hospitalière</p>
                 </div>
-                <div>
-                  <h1 className="text-xl font-extrabold text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
-                    Gestion Hospitalière
-                  </h1>
-                  <p className="text-white/70 text-sm">
-                    {user?.prenom} {user?.nom} · {stats.total_rdv ?? 0} rendez-vous aujourd'hui
-                  </p>
+                <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>
+                  {user?.prenom} {user?.nom}
+                </h1>
+                <p className="text-gray-500 text-sm mb-5">{stats.total_rdv ?? 0} rendez-vous aujourd&apos;hui</p>
+                {/* Stats bandeau horizontal */}
+                <div className="flex flex-wrap gap-6">
+                  {[
+                    { label: 'En attente', value: stats.en_attente ?? 0, accent: 'text-amber-600' },
+                    { label: 'Confirmés', value: stats.confirme ?? 0, accent: 'text-emerald-600' },
+                    { label: 'Terminés', value: stats.termine ?? 0, accent: 'text-teal-600' },
+                    { label: 'Immédiats', value: stats.immediates ?? 0, accent: 'text-indigo-600' },
+                    { label: 'Solde', value: walletData?.solde != null ? `${parseInt(walletData.solde).toLocaleString('fr-FR')} F` : '—', accent: 'text-violet-600' },
+                  ].map(s => (
+                    <div key={s.label} className="text-center">
+                      <p className={`text-2xl font-extrabold ${s.accent}`} style={{ fontFamily: 'Sora, sans-serif' }}>{s.value}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 font-medium">{s.label}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={refreshDashboard}
-                  className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4 text-white" />
-                </button>
-                <div className="bg-white/20 rounded-xl px-3 py-1.5 text-sm font-bold text-white">
-                  {walletData?.solde != null
-                    ? `${parseInt(walletData.solde).toLocaleString('fr-FR')} FCFA`
-                    : '—'}
-                </div>
-              </div>
-            </div>
-
-            {/* Stats rapides */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-              {[
-                { label: 'En attente', value: stats.en_attente ?? 0, color: 'text-amber-300' },
-                { label: 'Confirmés', value: stats.confirme ?? 0, color: 'text-emerald-300' },
-                { label: 'Terminés', value: stats.termine ?? 0, color: 'text-teal-300' },
-                { label: 'Immédiats', value: stats.immediates ?? 0, color: 'text-violet-300' },
-              ].map(s => (
-                <div key={s.label} className="bg-white/10 rounded-xl px-3 py-2 text-center">
-                  <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
-                  <p className="text-white/70 text-xs">{s.label}</p>
-                </div>
-              ))}
+              <button
+                onClick={refreshDashboard}
+                className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors flex-shrink-0"
+              >
+                <RefreshCw className="w-4 h-4 text-gray-500" />
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Navigation tabs */}
-          <div className="max-w-7xl mx-auto px-4 pb-0">
-            <div className="flex gap-1 overflow-x-auto pb-0 scrollbar-hide">
+        {/* Navigation tabs */}
+        <div className="bg-white border-b border-gray-200 shadow-sm sticky top-16 z-10">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex gap-0 overflow-x-auto scrollbar-hide">
               {MAIN_TABS.map(tab => {
                 const Icon = tab.icon
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setMainTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-3 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${
+                    className={`flex items-center gap-2 px-5 py-4 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${
                       mainTab === tab.id
-                        ? 'border-white text-white'
-                        : 'border-transparent text-white/60 hover:text-white/80'
+                        ? 'border-indigo-600 text-indigo-700'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
