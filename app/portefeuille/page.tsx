@@ -5,10 +5,11 @@ import Navbar from '@/components/layout/Navbar'
 import { wallet } from '@/lib/api'
 import {
   ArrowUp, ArrowDown, Clock, CheckCircle, AlertTriangle, Lock,
-  Loader2, Wallet, Shield, TrendingUp, X, ChevronRight, Smartphone,
+  Loader2, Wallet, Shield, TrendingUp, X, ChevronRight, Smartphone, Phone,
 } from 'lucide-react'
 
-const FEE_RATE = 0.015
+const FEE_RATE          = 0.015
+const WITHDRAW_FEE_RATE = 0.01
 
 // ── Mobile Money Icons ─────────────────────────────────────────────────────────
 
@@ -87,8 +88,10 @@ export default function PortefeuillePage() {
   const [walletData, setWalletData]       = useState<any>(null)
   const [transactions, setTransactions]   = useState<any[]>([])
   const [deposits, setDeposits]           = useState<any[]>([])
+  const [withdrawals, setWithdrawals]     = useState<any[]>([])
   const [loading, setLoading]             = useState(true)
   const [showDeposit, setShowDeposit]     = useState(false)
+  const [showWithdraw, setShowWithdraw]   = useState(false)
   const [activeTab, setActiveTab]         = useState<'all' | 'depot' | 'pending'>('all')
 
   // Deposit form state
@@ -100,15 +103,26 @@ export default function PortefeuillePage() {
   const [depositLoading, setDepositLoading] = useState(false)
   const [depositError, setDepositError]   = useState('')
 
+  // Withdrawal form state
+  const [wMethod, setWMethod]             = useState('wave')
+  const [wAmount, setWAmount]             = useState(0)
+  const [wCustomAmount, setWCustomAmount] = useState('')
+  const [wPhone, setWPhone]               = useState('')
+  const [wStep, setWStep]                 = useState<'form' | 'done'>('form')
+  const [wResult, setWResult]             = useState<any>(null)
+  const [wLoading, setWLoading]           = useState(false)
+  const [wError, setWError]               = useState('')
+
   // Action
   const [actionLoading, setActionLoading] = useState<number | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
-      const [w, tx, deps] = await Promise.allSettled([wallet.me(), wallet.transactions(), wallet.deposits()])
-      if (w.status   === 'fulfilled') setWalletData(w.value)
-      if (tx.status  === 'fulfilled') setTransactions(tx.value)
+      const [w, tx, deps, wds] = await Promise.allSettled([wallet.me(), wallet.transactions(), wallet.deposits(), wallet.withdrawals()])
+      if (w.status    === 'fulfilled') setWalletData(w.value)
+      if (tx.status   === 'fulfilled') setTransactions(tx.value)
       if (deps.status === 'fulfilled') setDeposits(deps.value)
+      if (wds.status  === 'fulfilled') setWithdrawals(wds.value)
     } catch {}
     finally { setLoading(false) }
   }, [])
@@ -121,9 +135,13 @@ export default function PortefeuillePage() {
     !/(commande|livraison|médicament|medicament)/i.test(t.description ?? '')
   )
 
-  const totalAmount = amount || Number(customAmount) || 0
-  const frais       = Math.round(totalAmount * FEE_RATE)
-  const netAmount   = totalAmount - frais
+  const totalAmount   = amount || Number(customAmount) || 0
+  const frais         = Math.round(totalAmount * FEE_RATE)
+  const netAmount     = totalAmount - frais
+
+  const wTotal        = wAmount || Number(wCustomAmount) || 0
+  const wFrais        = Math.round(wTotal * WITHDRAW_FEE_RATE)
+  const wNetAmount    = wTotal - wFrais
 
   function openDeposit() {
     setShowDeposit(true); setDepositStep('form')
@@ -167,6 +185,28 @@ export default function PortefeuillePage() {
         setDepositStep('step3_wait')
       }
     }, 2000)
+  }
+
+  function openWithdraw() {
+    setShowWithdraw(true); setWStep('form')
+    setWAmount(0); setWCustomAmount(''); setWMethod('wave'); setWPhone(''); setWError(''); setWResult(null)
+  }
+
+  function closeWithdraw() { setShowWithdraw(false); setWStep('form'); setWResult(null) }
+
+  async function initiateWithdraw() {
+    const total = wAmount || Number(wCustomAmount) || 0
+    if (total < 1000) { setWError('Montant minimum : 1 000 F CFA'); return }
+    if (!wPhone.trim() || wPhone.trim().length < 8) { setWError('Entrez un numéro de téléphone valide'); return }
+    if (total > balance) { setWError('Solde insuffisant'); return }
+    setWLoading(true); setWError('')
+    try {
+      const res = await wallet.withdraw(wMethod, total, wPhone.trim())
+      setWResult(res)
+      setWStep('done')
+      await fetchData()
+    } catch (e: any) { setWError(e.message || 'Erreur lors du retrait') }
+    finally { setWLoading(false) }
   }
 
   async function handleConfirm(id: number) {
@@ -225,6 +265,12 @@ export default function PortefeuillePage() {
                     >
                       <ArrowDown className="w-4 h-4" /> Déposer
                     </button>
+                    <button
+                      onClick={openWithdraw}
+                      className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-6 py-2.5 rounded-xl font-semibold transition-all border border-white/30"
+                    >
+                      <ArrowUp className="w-4 h-4" /> Retirer
+                    </button>
                   </div>
                 </div>
                 <div className="absolute right-8 top-8 opacity-10">
@@ -233,18 +279,20 @@ export default function PortefeuillePage() {
               </motion.div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
                 {[
                   { label: 'En attente',   value: `${pending.reduce((s, t) => s + Number(t.montant ?? 0), 0).toLocaleString('fr-FR')} F`, icon: <Clock className="w-5 h-5" />, color: 'text-amber-600 bg-amber-50' },
                   { label: 'Total crédité', value: `+${transactions.filter(t => t.type === 'credit').reduce((s, t) => s + Number(t.montant ?? 0), 0).toLocaleString('fr-FR')} F`, icon: <ArrowDown className="w-5 h-5" />, color: 'text-green-600 bg-green-50' },
                   { label: 'Total dépensé', value: `-${transactions.filter(t => t.type === 'debit').reduce((s, t) => s + Number(t.montant ?? 0), 0).toLocaleString('fr-FR')} F`, icon: <TrendingUp className="w-5 h-5" />, color: 'text-blue-600 bg-blue-50' },
                 ].map((item, i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-                    <div className={`w-10 h-10 rounded-xl ${item.color} flex items-center justify-center mb-3`}>
+                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex sm:flex-col items-center sm:items-start gap-3 sm:gap-0">
+                    <div className={`w-10 h-10 rounded-xl ${item.color} flex items-center justify-center flex-shrink-0 sm:mb-3`}>
                       {item.icon}
                     </div>
-                    <p className="text-lg font-bold text-gray-900">{item.value}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{item.label}</p>
+                    <div>
+                      <p className="text-base sm:text-lg font-bold text-gray-900">{item.value}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{item.label}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -355,10 +403,168 @@ export default function PortefeuillePage() {
                   </div>
                 </div>
               )}
+
+              {/* Withdrawals history */}
+              {withdrawals.length > 0 && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mt-4">
+                  <h2 className="font-bold text-gray-900 mb-4" style={{ fontFamily: 'Sora' }}>Retraits Mobile Money</h2>
+                  <div className="space-y-2">
+                    {withdrawals.map(w => {
+                      const m = METHODS.find(x => x.id === w.methode)
+                      const Icon = m?.icon
+                      return (
+                        <div key={w.id} className="flex items-center gap-4 p-3 rounded-xl border border-gray-100">
+                          {Icon && <Icon size={32} />}
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-gray-900">{m?.label} → {w.telephone}</p>
+                            <p className="text-xs text-gray-400">
+                              Retiré : {Number(w.montant_demande).toLocaleString('fr-FR')} F · Frais : {Number(w.frais).toLocaleString('fr-FR')} F · Versé : {Number(w.montant_verse).toLocaleString('fr-FR')} F · Réf : {w.reference}
+                            </p>
+                          </div>
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${w.statut === 'traite' ? 'bg-green-50 text-green-600' : w.statut === 'en_attente' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-500'}`}>
+                            {w.statut === 'traite' ? 'Traité' : w.statut === 'en_attente' ? 'En attente' : w.statut}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
+
+      {/* Withdrawal Modal */}
+      <AnimatePresence>
+        {showWithdraw && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center p-4 z-50"
+            onClick={wStep === 'form' ? closeWithdraw : undefined}
+          >
+            <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+              className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Sora' }}>
+                  {wStep === 'done' ? 'Retrait effectué !' : 'Retirer des fonds'}
+                </h2>
+                <button onClick={closeWithdraw} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="px-6 py-5">
+                {wStep === 'form' && (
+                  <>
+                    {/* Solde disponible */}
+                    <div className="bg-blue-50 rounded-2xl px-4 py-3 mb-5 flex justify-between items-center">
+                      <span className="text-sm text-blue-700 font-medium">Solde disponible</span>
+                      <span className="text-lg font-extrabold text-blue-900">{balance.toLocaleString('fr-FR')} F CFA</span>
+                    </div>
+
+                    {/* Operator selection */}
+                    <p className="text-sm font-semibold text-gray-700 mb-3">Opérateur de réception</p>
+                    <div className="grid grid-cols-2 gap-2 mb-5">
+                      {METHODS.map(m => {
+                        const Icon = m.icon
+                        return (
+                          <button key={m.id} onClick={() => setWMethod(m.id)}
+                            className={`flex items-center gap-3 p-3 rounded-2xl border-2 transition-all ${wMethod === m.id ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:border-gray-200'}`}
+                          >
+                            <Icon size={36} />
+                            <div className="text-left">
+                              <p className="text-sm font-bold text-gray-900">{m.label}</p>
+                              <p className="text-xs text-gray-400">{m.sub}</p>
+                            </div>
+                            {wMethod === m.id && <CheckCircle className="w-4 h-4 text-blue-500 ml-auto" />}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {/* Phone number */}
+                    <p className="text-sm font-semibold text-gray-700 mb-2">Numéro de téléphone</p>
+                    <div className="relative mb-5">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input type="tel" placeholder="Ex : 07 00 00 00 00" value={wPhone}
+                        onChange={e => setWPhone(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm"
+                      />
+                    </div>
+
+                    {/* Amount */}
+                    <p className="text-sm font-semibold text-gray-700 mb-3">Montant à retirer</p>
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      {QUICK_AMOUNTS.filter(a => a <= balance).map(a => (
+                        <button key={a} onClick={() => { setWAmount(a); setWCustomAmount('') }}
+                          className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${wAmount === a && !wCustomAmount ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-100 text-gray-600 hover:border-gray-300'}`}>
+                          {(a / 1000).toFixed(0)}k F
+                        </button>
+                      ))}
+                    </div>
+                    <input type="number" placeholder="Autre montant (F CFA)" value={wCustomAmount}
+                      onChange={e => { setWCustomAmount(e.target.value); setWAmount(0) }}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm mb-4"
+                    />
+
+                    {/* Breakdown */}
+                    {wTotal > 0 && (
+                      <div className="bg-gray-50 rounded-2xl p-4 mb-5 space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Montant retiré</span>
+                          <span className="font-semibold text-gray-900">{wTotal.toLocaleString('fr-FR')} F</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Frais de retrait (1%)</span>
+                          <span className="font-semibold text-red-500">−{wFrais.toLocaleString('fr-FR')} F</span>
+                        </div>
+                        <div className="h-px bg-gray-200" />
+                        <div className="flex justify-between">
+                          <span className="font-bold text-gray-900">Versé sur votre mobile</span>
+                          <span className="font-extrabold text-green-600">{wNetAmount.toLocaleString('fr-FR')} F</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {wError && <p className="text-sm text-red-500 mb-3">{wError}</p>}
+
+                    <button onClick={initiateWithdraw}
+                      disabled={!wTotal || wTotal < 1000 || wTotal > balance || !wPhone.trim() || wLoading}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white py-3.5 rounded-2xl font-bold text-base transition-all flex items-center justify-center gap-2">
+                      {wLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><ArrowUp className="w-5 h-5" /> Confirmer le retrait</>}
+                    </button>
+                  </>
+                )}
+
+                {wStep === 'done' && wResult && (
+                  <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                    className="flex flex-col items-center py-4">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                      <CheckCircle className="w-9 h-9 text-green-500" />
+                    </div>
+                    <p className="text-xl font-extrabold text-gray-900 mb-1" style={{ fontFamily: 'Sora' }}>
+                      {Number(wResult.montant_verse).toLocaleString('fr-FR')} F CFA
+                    </p>
+                    <p className="text-sm text-gray-500 mb-1">
+                      Versé sur <span className="font-bold">{wResult.telephone}</span> via {methodLabel[wResult.methode] || wResult.methode}
+                    </p>
+                    <p className="text-xs text-gray-400 mb-1">Réf : {wResult.reference}</p>
+                    <p className="text-sm text-gray-500 mb-5">
+                      Nouveau solde : <span className="font-bold text-gray-900">{Number(wResult.nouveau_solde).toLocaleString('fr-FR')} F CFA</span>
+                    </p>
+                    <button onClick={closeWithdraw}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-2xl font-bold transition-all">
+                      Fermer
+                    </button>
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Deposit Modal */}
       <AnimatePresence>
@@ -409,7 +615,7 @@ export default function PortefeuillePage() {
 
                     {/* Amount */}
                     <p className="text-sm font-semibold text-gray-700 mb-3">Montant</p>
-                    <div className="grid grid-cols-3 gap-2 mb-3">
+                    <div className="grid grid-cols-3 sm:grid-cols-3 gap-2 mb-3">
                       {QUICK_AMOUNTS.map(a => (
                         <button key={a} onClick={() => { setAmount(a); setCustomAmount('') }}
                           className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${amount === a && !customAmount ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-100 text-gray-600 hover:border-gray-300'}`}>
