@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import Navbar from '@/components/layout/Navbar'
@@ -83,8 +84,22 @@ function StatCard({ icon: Icon, label, value, sub, color = 'indigo' }: any) {
 
 // ── Page principale ───────────────────────────────────────────────────────────
 
+function useHospitalAction() {
+  const router = useRouter()
+  return function handleError(e: any, fallback?: string) {
+    if (e.message === 'Accès refusé' || e.message?.includes('403')) {
+      alert('Votre session a expiré ou vous n\'êtes pas connecté en tant qu\'établissement. Veuillez vous reconnecter.')
+      router.push('/login')
+    } else {
+      alert(e.message ?? fallback ?? 'Erreur serveur')
+    }
+  }
+}
+
 export default function CliniqueHopitalDashboard() {
   const { user } = useAuth()
+  const router = useRouter()
+  const handleError = useHospitalAction()
   const [mainTab, setMainTab] = useState<MainTab>('reception')
   const [dashData, setDashData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -190,10 +205,10 @@ export default function CliniqueHopitalDashboard() {
   async function handleConfirm(apptId: number, roomId?: number) {
     setActionLoading(`confirm-${apptId}`)
     try {
-      const result = await hospital.receptionConfirm(apptId, roomId)
+      await hospital.receptionConfirm(apptId, roomId)
       await refreshDashboard()
     } catch (e: any) {
-      alert(e.message)
+      handleError(e)
     } finally {
       setActionLoading(null)
     }
@@ -205,7 +220,7 @@ export default function CliniqueHopitalDashboard() {
     try {
       await hospital.receptionReject(apptId)
       await refreshDashboard()
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { handleError(e) }
     finally { setActionLoading(null) }
   }
 
@@ -219,7 +234,7 @@ export default function CliniqueHopitalDashboard() {
         alert('File vide — salle marquée libre.')
       }
       await refreshDashboard()
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { handleError(e) }
     finally { setActionLoading(null) }
   }
 
@@ -228,7 +243,7 @@ export default function CliniqueHopitalDashboard() {
     try {
       await hospital.finishConsultation(roomId)
       await refreshDashboard()
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { handleError(e) }
     finally { setActionLoading(null) }
   }
 
@@ -237,7 +252,7 @@ export default function CliniqueHopitalDashboard() {
     try {
       await hospital.roomStatus(roomId, statut)
       await refreshDashboard()
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { handleError(e) }
     finally { setActionLoading(null) }
   }
 
@@ -246,7 +261,7 @@ export default function CliniqueHopitalDashboard() {
     try {
       await hospital.startConsultation(roomId)
       await refreshDashboard()
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { handleError(e) }
     finally { setActionLoading(null) }
   }
 
@@ -260,7 +275,7 @@ export default function CliniqueHopitalDashboard() {
         alert('Patient remis en fin de file.')
       }
       await refreshDashboard()
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { handleError(e) }
     finally { setActionLoading(null) }
   }
 
@@ -269,7 +284,7 @@ export default function CliniqueHopitalDashboard() {
     try {
       await hospital.finishExam(roomId, resultats)
       await refreshDashboard()
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { handleError(e) }
     finally { setActionLoading(null) }
   }
 
@@ -278,7 +293,7 @@ export default function CliniqueHopitalDashboard() {
     try {
       await hospital.finishHospitalization(roomId)
       await refreshDashboard()
-    } catch (e: any) { alert(e.message) }
+    } catch (e: any) { handleError(e) }
     finally { setActionLoading(null) }
   }
 
@@ -287,7 +302,7 @@ export default function CliniqueHopitalDashboard() {
     try {
       await hospital.dischargeHospitalization(hospId, data)
       await refreshDashboard()
-    } catch (e: any) { alert(e.message); throw e }
+    } catch (e: any) { handleError(e); throw e }
     finally { setActionLoading(null) }
   }
 
@@ -295,21 +310,21 @@ export default function CliniqueHopitalDashboard() {
     try {
       await hospital.assignReferral(referralId, data)
       await loadAllPending()
-    } catch (e: any) { alert(e.message); throw e }
+    } catch (e: any) { handleError(e); throw e }
   }
 
   async function handleAssignExam(examId: number, data: { room_id?: number; date_rdv?: string; heure_rdv?: string; tarif?: number }) {
     try {
       await hospital.assignExam(examId, data)
       await loadAllPending()
-    } catch (e: any) { alert(e.message); throw e }
+    } catch (e: any) { handleError(e); throw e }
   }
 
   async function handleAssignHosp(hospId: number, data: { room_id?: number; date_rdv?: string; heure_rdv?: string; tarif?: number }) {
     try {
       await hospital.assignHospitalization(hospId, data)
       await loadAllPending()
-    } catch (e: any) { alert(e.message); throw e }
+    } catch (e: any) { handleError(e); throw e }
   }
 
   async function handleAddPrescription(appointmentId: number, data: { medicaments: any[]; notes?: string }) {
