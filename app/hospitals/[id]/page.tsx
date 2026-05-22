@@ -96,9 +96,14 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ id: s
       usersApi.structures({ type: 'clinique' }),
       walletApi.me().catch(() => null),
     ]).then(([structures, w]) => {
-      const match = structures.find((s: any) =>
-        (s.nom || s.structure?.nom)?.toLowerCase().trim() === hospital.nom.toLowerCase().trim()
-      )
+      const hospitalNom = hospital.nom.toLowerCase().trim()
+      const match = structures.find((s: any) => {
+        // Primary: match by linked medmap account email (most reliable)
+        if (hospital.medmap_email && s.structure?.email === hospital.medmap_email) return true
+        // Fallback: match by structure name
+        const sNom = (s.nom || s.structure?.nom || '').toLowerCase().trim()
+        return sNom === hospitalNom
+      })
       if (match) setDbStructureId(match.structure_id ?? match.id)
       if (w) setWalletSolde(parseFloat(w.solde || 0))
     }).catch(() => {})
