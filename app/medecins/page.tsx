@@ -475,6 +475,11 @@ export default function MedecinsPage() {
   const [assignTarget, setAssignTarget] = useState<{ provider: any; type: 'medecin' | 'coach' } | null>(null)
   const [isPremium, setIsPremium] = useState(false)
   const [requestedIds, setRequestedIds] = useState<number[]>([])
+  const [myAssignments, setMyAssignments] = useState<any[]>([])
+  const [arrivingId, setArrivingId] = useState<number | null>(null)
+  const [payDureeFor, setPayDureeFor] = useState<number | null>(null)
+  const [payDuree, setPayDuree] = useState(1)
+  const [paying, setPaying] = useState(false)
 
   // Chat
   const [chatTarget, setChatTarget] = useState<{ provider: any; label: string } | null>(null)
@@ -493,10 +498,36 @@ export default function MedecinsPage() {
       .finally(() => setCoachLoading(false))
   }, [filterDispo])
 
+  function reloadMine() {
+    personalCare.mine().then(list => {
+      setMyAssignments(list)
+      setRequestedIds(list.map((a: any) => a.provider_id))
+    }).catch(() => {})
+  }
+
   useEffect(() => {
     subscriptions.status().then(s => setIsPremium(s?.plan === 'premium')).catch(() => {})
-    personalCare.mine().then(list => setRequestedIds(list.map((a: any) => a.provider_id))).catch(() => {})
+    reloadMine()
   }, [])
+
+  async function handlePatientArrives(id: number) {
+    setArrivingId(id)
+    try {
+      await personalCare.patientArrives(id)
+      reloadMine()
+    } catch (e: any) { alert(e.message || 'Erreur') }
+    finally { setArrivingId(null) }
+  }
+
+  async function handlePay(id: number) {
+    setPaying(true)
+    try {
+      await personalCare.payRequest(id, { duree_mois: payDuree })
+      setPayDureeFor(null)
+      reloadMine()
+    } catch (e: any) { alert(e.message || 'Erreur') }
+    finally { setPaying(false) }
+  }
 
   const filteredDocs = useMemo(() => {
     let list = doctors
@@ -579,6 +610,168 @@ export default function MedecinsPage() {
         </div>
 
         <div className="max-w-4xl mx-auto px-4 py-6">
+
+          {/* ── Mes suivis personnels ── */}
+          {myAssignments.filter(a => !['annule', 'termine', 'rejete'].includes(a.statut)).length > 0 && (
+            <div className="mb-6 bg-white rounded-2xl border-2 border-violet-200 shadow-sm p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="w-7 h-7 bg-violet-100 rounded-lg flex items-center justify-center text-base">👑</span>
+                <h2 className="font-bold text-gray-900" style={{ fontFamily: 'Sora' }}>Médecins & Coachs Personnels</h2>
+                <span className="ml-auto bg-violet-100 text-violet-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                  {myAssignments.filter(a => !['annule', 'termine', 'rejete'].includes(a.statut)).length}
+                </span>
+              </div>
+              <div className="space-y-3">
+                {myAssignments.filter(a => !['annule', 'termine', 'rejete'].includes(a.statut)).map(a => {
+                  const provName = a.provider_type === 'medecin'
+                    ? `Dr. ${a.provider.prenom} ${a.provider.nom}`
+                    : `${a.provider.prenom} ${a.provider.nom}`
+                  const spec = a.provider.profile?.specialite || ''
+                  const tarifMensuel = a.provider_type === 'medecin'
+                    ? (parseFloat(a.provider.profile?.tarif || 0) * 4)
+                    : parseFloat(a.provider.profile?.tarif_mensuel || 0)
+                  const isPayOpen = payDureeFor === a.id
+
+                  return (
+                    <div key={a.id} className="border border-gray-100 rounded-xl p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient(a.provider_id)} flex items-center justify-center flex-shrink-0`}>
+                          <span className="text-white font-extrabold text-sm">{getInitials(provName)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-900 text-sm">{provName}</p>
+                          {spec && <p className="text-xs text-violet-600">{spec}</p>}
+                        </div>
+                        <span className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          a.statut === 'pending' ? 'bg-amber-100 text-amber-700' :
+                          a.statut === 'accepted' ? 'bg-emerald-100 text-emerald-700' :
+                          a.statut === 'meeting_scheduled' ? 'bg-blue-100 text-blue-700' :
+                          a.statut === 'meeting_done' ? 'bg-teal-100 text-teal-700' :
+                          'bg-violet-100 text-violet-700'
+                        }`}>
+                          {a.statut === 'pending' ? 'En attente' :
+                           a.statut === 'accepted' ? 'Acceptée' :
+                           a.statut === 'meeting_scheduled' ? 'RDV fixé' :
+                           a.statut === 'meeting_done' ? 'RDV effectué' : 'Actif'}
+                        </span>
+                      </div>
+
+                      {a.statut === 'pending' && (
+                        <p className="text-xs text-amber-700 bg-amber-50 rounded-lg p-2.5">
+                          ⏳ En attente de réponse — {provName} n&apos;a pas encore répondu à votre demande.
+                        </p>
+                      )}
+
+                      {a.statut === 'accepted' && (
+                        <p className="text-xs text-emerald-700 bg-emerald-50 rounded-lg p-2.5">
+                          ✓ Demande acceptée — {provName} va fixer une date de rendez-vous initial avec vous.
+                        </p>
+                      )}
+
+                      {a.statut === 'meeting_scheduled' && (
+                        <div>
+                          <div className="bg-blue-50 rounded-lg p-3 mb-2">
+                            <p className="text-xs font-bold text-blue-800 mb-1">📅 Rendez-vous initial</p>
+                            <p className="text-sm font-extrabold text-blue-900">
+                              {a.meeting_date
+                                ? new Date(a.meeting_date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+                                : ''}
+                              {a.meeting_heure ? ` à ${a.meeting_heure}` : ''}
+                            </p>
+                            <div className="flex gap-4 mt-2 text-[10px]">
+                              <span className={a.meeting_patient_arrived ? 'text-emerald-600 font-semibold' : 'text-gray-400'}>
+                                {a.meeting_patient_arrived ? '✓ Votre présence confirmée' : '○ Votre présence'}
+                              </span>
+                              <span className={a.meeting_provider_arrived ? 'text-emerald-600 font-semibold' : 'text-gray-400'}>
+                                {a.meeting_provider_arrived ? `✓ ${provName} présent` : `○ ${provName}`}
+                              </span>
+                            </div>
+                          </div>
+                          {!a.meeting_patient_arrived && (
+                            <button onClick={() => handlePatientArrives(a.id)}
+                              disabled={arrivingId === a.id}
+                              className="w-full py-2.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5">
+                              {arrivingId === a.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                              ✓ J&apos;étais présent au rendez-vous
+                            </button>
+                          )}
+                          {a.meeting_patient_arrived && !a.meeting_provider_arrived && (
+                            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg p-2.5 text-center">
+                              ⏳ En attente de la confirmation de {provName}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {a.statut === 'meeting_done' && (
+                        <div>
+                          <div className="bg-teal-50 rounded-lg p-2.5 mb-2">
+                            <p className="text-xs text-teal-700 font-semibold">🎉 Rendez-vous confirmé par les deux parties !</p>
+                            <p className="text-xs text-teal-600 mt-0.5">Choisissez une durée et payez pour démarrer votre suivi.</p>
+                          </div>
+                          {!isPayOpen ? (
+                            <button onClick={() => { setPayDureeFor(a.id); setPayDuree(1) }}
+                              className="w-full py-2.5 text-xs bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                              <Crown className="w-3.5 h-3.5" /> Confirmer et payer
+                            </button>
+                          ) : (
+                            <div className="bg-violet-50 border border-violet-100 rounded-xl p-3 space-y-3">
+                              <p className="text-xs font-bold text-violet-800">Choisissez votre durée de suivi</p>
+                              <div className="grid grid-cols-2 gap-2">
+                                {DUREES.map(d => (
+                                  <button key={d.mois} onClick={() => setPayDuree(d.mois)}
+                                    className={`p-2.5 rounded-xl border-2 text-left transition-all ${payDuree === d.mois ? 'border-violet-500 bg-violet-100' : 'border-gray-200 bg-white hover:border-violet-300'}`}>
+                                    <p className={`text-xs font-bold ${payDuree === d.mois ? 'text-violet-700' : 'text-gray-800'}`}>{d.label}</p>
+                                    <p className={`text-[10px] ${payDuree === d.mois ? 'text-violet-500' : 'text-gray-400'}`}>{d.desc}</p>
+                                    {tarifMensuel > 0 && (
+                                      <p className={`text-[10px] font-bold mt-0.5 ${payDuree === d.mois ? 'text-violet-600' : 'text-gray-500'}`}>
+                                        {(tarifMensuel * d.mois).toLocaleString('fr-FR')} F
+                                      </p>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                              {tarifMensuel > 0 && (
+                                <div className="bg-white rounded-lg px-3 py-2 flex justify-between items-center border border-violet-100">
+                                  <span className="text-xs text-gray-500">Total à payer</span>
+                                  <span className="text-sm font-extrabold text-violet-700">{(tarifMensuel * payDuree).toLocaleString('fr-FR')} F CFA</span>
+                                </div>
+                              )}
+                              <div className="flex gap-2">
+                                <button onClick={() => setPayDureeFor(null)}
+                                  className="flex-1 py-2 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50">
+                                  Annuler
+                                </button>
+                                <button onClick={() => handlePay(a.id)}
+                                  disabled={paying}
+                                  className="flex-1 py-2 text-xs bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-lg disabled:opacity-50 flex items-center justify-center gap-1">
+                                  {paying ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                                  Payer & Démarrer
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {a.statut === 'actif' && (
+                        <div className="bg-violet-50 rounded-lg p-2.5">
+                          <p className="text-xs text-violet-700 font-semibold">
+                            ✓ Suivi actif — {a.sessions?.effectuees || 0}/{a.sessions?.total || 0} séances effectuées
+                          </p>
+                          {a.date_fin && (
+                            <p className="text-[10px] text-violet-500 mt-0.5">
+                              Jusqu&apos;au {new Date(String(a.date_fin).slice(0, 10) + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* ── MÉDECINS TAB ── */}
           {tab === 'medecins' && (
