@@ -443,10 +443,10 @@ export default function PortefeuillePage() {
             onClick={wStep === 'form' ? closeWithdraw : undefined}
           >
             <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
-              className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
+              className="bg-white rounded-3xl w-full max-w-md shadow-2xl flex flex-col max-h-[92vh]"
               onClick={e => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Sora' }}>
                   {wStep === 'done' ? 'Retrait effectué !' : 'Retirer des fonds'}
                 </h2>
@@ -455,7 +455,7 @@ export default function PortefeuillePage() {
                 </button>
               </div>
 
-              <div className="px-6 py-5">
+              <div className="px-6 py-5 overflow-y-auto flex-1">
                 {wStep === 'form' && (
                   <>
                     {/* Solde disponible */}
@@ -574,11 +574,11 @@ export default function PortefeuillePage() {
             onClick={depositStep === 'form' ? closeDeposit : undefined}
           >
             <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
-              className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl"
+              className="bg-white rounded-3xl w-full max-w-md shadow-2xl flex flex-col max-h-[92vh]"
               onClick={e => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-900" style={{ fontFamily: 'Sora' }}>
                   {depositStep === 'form' ? 'Déposer des fonds' : depositStep === 'step5_done' ? 'Dépôt confirmé !' : 'Traitement en cours…'}
                 </h2>
@@ -589,7 +589,7 @@ export default function PortefeuillePage() {
                 )}
               </div>
 
-              <div className="px-6 py-5">
+              <div className="px-6 py-5 overflow-y-auto flex-1">
                 {/* FORM STEP */}
                 {depositStep === 'form' && (
                   <>
