@@ -92,69 +92,56 @@ export default function LivreurDashboard() {
   const totalGained = history.reduce((s: number, o: any) => s + (parseFloat(o.frais_livraison) || 700), 0)
 
   return (
-    <div className="min-h-screen bg-[#F8FAFB]">
+    <div className="min-h-screen bg-[#F4F6F9]">
       <DashboardNav />
-      <main className="pt-20 pb-16 px-4 sm:px-6 max-w-4xl mx-auto">
 
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative bg-gradient-to-br from-violet-700 via-purple-600 to-indigo-600 rounded-3xl p-6 sm:p-8 mb-6 text-white overflow-hidden"
-        >
-          <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
-          <div className="relative flex items-center justify-between gap-4">
-            <div>
-              <p className="text-white/70 text-sm mb-1">Tableau de bord · Livreur</p>
-              <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: 'Sora, sans-serif' }}>
-                Bonjour, {user?.prenom} 👋
-              </h1>
-              <p className="text-white/70 text-sm">MedMap+ Livreur</p>
+      {/* Hero — split éditorial */}
+      <div className="pt-16 relative bg-white border-b border-gray-100 overflow-hidden" style={{ minHeight: 230 }}>
+        {/* Photo droite */}
+        <div className="absolute inset-y-0 right-0 w-1/2 hidden lg:block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/livreur.jpg" alt="" className="w-full h-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-l from-transparent to-white" />
+        </div>
+        {/* Contenu gauche */}
+        <div className="relative max-w-4xl mx-auto px-6 py-8 lg:py-10">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1 h-5 bg-violet-600 rounded-full" />
+            <p className="text-violet-700 text-xs font-bold uppercase tracking-widest">Espace Livreur</p>
+          </div>
+          <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>
+            Bonjour, {user?.prenom} 👋
+          </h1>
+          <p className="text-gray-500 text-sm mb-4">MedMap+ · Livreur partenaire</p>
+          {available.length > 0 && (
+            <div className="inline-flex items-center gap-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-4 py-1.5 text-sm font-bold animate-pulse">
+              📦 {available.length} livraison{available.length > 1 ? 's' : ''} disponible{available.length > 1 ? 's' : ''}
             </div>
-            <div className="flex-shrink-0 w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center text-2xl font-extrabold">
-              {user ? `${user.prenom.charAt(0)}${user.nom.charAt(0)}` : 'LV'}
+          )}
+        </div>
+      </div>
+
+      {/* Stats bandeau */}
+      <div className="bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="grid grid-cols-3 divide-x divide-gray-100">
+            <div className="py-4 px-4 text-center">
+              <p className="text-2xl font-extrabold text-amber-600" style={{ fontFamily: 'Sora, sans-serif' }}>{available.length}</p>
+              <p className="text-xs text-gray-500 mt-0.5 font-medium">Disponibles</p>
+            </div>
+            <div className="py-4 px-4 text-center">
+              <p className="text-2xl font-extrabold text-violet-600" style={{ fontFamily: 'Sora, sans-serif' }}>{activeCount}</p>
+              <p className="text-xs text-gray-500 mt-0.5 font-medium">En cours</p>
+            </div>
+            <div className="py-4 px-4 text-center">
+              <p className="text-2xl font-extrabold text-emerald-600" style={{ fontFamily: 'Sora, sans-serif' }}>{loading ? '…' : `${solde.toLocaleString('fr-FR')} F`}</p>
+              <p className="text-xs text-gray-500 mt-0.5 font-medium">Portefeuille</p>
             </div>
           </div>
-        </motion.div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          {[
-            {
-              icon: Package,
-              gradient: 'from-amber-500 to-orange-400',
-              value: String(available.length),
-              label: 'Disponibles',
-              sub: 'à accepter',
-            },
-            {
-              icon: Truck,
-              gradient: 'from-violet-500 to-purple-500',
-              value: String(activeCount),
-              label: 'En cours',
-              sub: activeCount > 0 ? 'livraison active' : 'aucune active',
-            },
-            {
-              icon: Wallet,
-              gradient: 'from-emerald-500 to-teal-500',
-              value: `${solde.toLocaleString('fr-FR')} F`,
-              label: 'Portefeuille',
-              sub: 'solde disponible',
-            },
-          ].map((s, i) => (
-            <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}>
-              <div className="flex items-center gap-3 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm">
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.gradient} flex items-center justify-center shadow-sm flex-shrink-0`}>
-                  <s.icon className="w-5 h-5 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-gray-900 leading-none truncate">{s.value}</p>
-                  <p className="text-xs text-gray-400 mt-0.5 truncate">{s.sub}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
         </div>
+      </div>
+
+      <main className="pb-16 px-4 sm:px-6 max-w-4xl mx-auto pt-6">
 
         {/* Tabs */}
         <div className="flex gap-1 bg-white rounded-2xl border border-gray-100 p-1 mb-5 shadow-sm">
@@ -418,4 +405,5 @@ export default function LivreurDashboard() {
       </main>
     </div>
   )
+
 }

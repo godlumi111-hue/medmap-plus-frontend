@@ -315,7 +315,11 @@ export default function EmergencyDashboard({ config }: { config: RoleConfig }) {
       {/* Photo Hero */}
       <div className="pt-16 relative overflow-hidden" style={{ minHeight: 260 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/images/samu.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+        <img
+          src={role === 'pompiers' ? '/images/pompier.jpg' : '/images/samu.jpg'}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
         {/* Overlay sombre fort à gauche, transparent à droite */}
         <div className="absolute inset-0 bg-gradient-to-r from-gray-950 via-gray-950/90 to-gray-900/40" />
         {/* Ligne de couleur en haut */}
