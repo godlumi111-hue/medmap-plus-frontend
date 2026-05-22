@@ -312,27 +312,33 @@ export default function EmergencyDashboard({ config }: { config: RoleConfig }) {
         loading={accepting}
       />
 
-      <div className="pt-16 max-w-5xl mx-auto px-4 py-6 space-y-6">
-
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gray-800 border border-gray-700 rounded-xl flex items-center justify-center text-xl">{emoji}</div>
+      {/* Photo Hero */}
+      <div className="pt-16 relative overflow-hidden" style={{ minHeight: 200 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/images/samu.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-950/97 via-gray-900/90 to-gray-900/55" />
+        <div className="relative max-w-5xl mx-auto px-4 py-8 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-white/10 border border-white/25 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl">{emoji}</div>
             <div>
-              <h1 className="text-white font-black text-xl">{label}</h1>
-              <p className="text-gray-400 text-sm">{user?.prenom} {user?.nom}</p>
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Centre opérationnel</p>
+              <h1 className="text-white font-black text-2xl" style={{ fontFamily: 'Sora, sans-serif' }}>{label}</h1>
+              <p className="text-gray-300 text-sm mt-0.5">{user?.prenom} {user?.nom}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 ${accent.indicatorBg} border rounded-lg`}>
+            <div className={`flex items-center gap-1.5 px-4 py-2 ${accent.indicatorBg} border rounded-xl`}>
               <div className={`w-2 h-2 ${accent.indicatorDot} rounded-full animate-pulse`} />
-              <span className={`${accent.indicatorText} text-xs font-semibold`}>EN SERVICE</span>
+              <span className={`${accent.indicatorText} text-xs font-bold`}>EN SERVICE</span>
             </div>
-            <button onClick={load} className="p-2 bg-gray-800 border border-gray-700 rounded-lg hover:border-gray-500 transition-colors">
-              <RefreshCw className="w-4 h-4 text-gray-400" />
+            <button onClick={load} className="p-2 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-colors">
+              <RefreshCw className="w-4 h-4 text-gray-300" />
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">

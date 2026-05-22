@@ -133,9 +133,10 @@ export default function PharmacieDashboard() {
       <div className="pt-16">
 
         {/* Hero */}
-        <div className="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 py-10 px-4 text-white overflow-hidden">
-          <div className="absolute -top-16 -right-16 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-emerald-300/20 rounded-full blur-3xl" />
+        <div className="relative py-10 px-4 text-white overflow-hidden" style={{ minHeight: 200 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/pharmatie.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/95 via-teal-900/88 to-cyan-900/60" />
           <div className="max-w-5xl mx-auto relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">

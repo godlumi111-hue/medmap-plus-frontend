@@ -373,7 +373,10 @@ export default function CliniqueHopitalDashboard() {
       <Navbar />
       <div className="pt-16">
         {/* Header */}
-        <div className="bg-gradient-to-r from-indigo-700 via-violet-700 to-purple-700 text-white">
+        <div className="relative text-white overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/equipe.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-950/95 via-violet-900/88 to-purple-900/65" />
           <div className="max-w-7xl mx-auto px-4 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
