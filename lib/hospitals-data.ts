@@ -7,7 +7,8 @@ export interface Hospital {
   ville: string
   telephone: string
   email: string
-  medmap_email?: string  // email du compte MedMap+ lié à cet établissement
+  medmap_email?: string
+  structure_db_id?: number  // ID direct de structure_profiles en DB
   note: number
   avis: number
   partenaire: boolean
@@ -38,6 +39,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 21 24 22 22',
     email: 'contact@chu-treichville.ci',
     medmap_email: 'chu.treichville@medmap.ci',
+    structure_db_id: 20,
     note: 4.2,
     avis: 1240,
     partenaire: true,
@@ -69,6 +71,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 22 44 10 10',
     email: 'contact@pisam.ci',
     medmap_email: 'pisam@medmap.ci',
+    structure_db_id: 21,
     note: 4.8,
     avis: 867,
     partenaire: true,
@@ -100,6 +103,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 20 31 05 05',
     email: 'info@farah.ci',
     medmap_email: 'polyclinique.farah@medmap.ci',
+    structure_db_id: 9,
     note: 4.7,
     avis: 543,
     partenaire: true,
@@ -131,6 +135,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 22 44 34 34',
     email: 'contact@chucocody.ci',
     medmap_email: 'chu.cocody@medmap.ci',
+    structure_db_id: 8,
     note: 4.4,
     avis: 2100,
     partenaire: true,
@@ -162,6 +167,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 22 40 28 28',
     email: 'contact@clinintl.ci',
     medmap_email: 'clinique.internationale@medmap.ci',
+    structure_db_id: 22,
     note: 4.6,
     avis: 391,
     partenaire: true,
@@ -193,6 +199,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 22 41 88 88',
     email: 'stviateur@sante.ci',
     medmap_email: 'clinique.saintviateur@medmap.ci',
+    structure_db_id: 23,
     note: 4.5,
     avis: 288,
     partenaire: true,
@@ -223,6 +230,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 21 35 44 44',
     email: 'sogefia@sante.ci',
     medmap_email: 'polyclinique.sogefia@medmap.ci',
+    structure_db_id: 24,
     note: 4.3,
     avis: 456,
     partenaire: true,
@@ -254,6 +262,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 22 48 39 39',
     email: 'avicenne@clinique.ci',
     medmap_email: 'clinique.avicenne@medmap.ci',
+    structure_db_id: 25,
     note: 4.7,
     avis: 324,
     partenaire: true,
@@ -315,6 +324,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 23 67 88 99',
     email: 'agban@polyclinique.ci',
     medmap_email: 'polyclinique.agban@medmap.ci',
+    structure_db_id: 26,
     note: 4.1,
     avis: 234,
     partenaire: true,
@@ -345,6 +355,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 20 22 11 55',
     email: 'cathedrale@clinique.ci',
     medmap_email: 'clinique.cathedrale@medmap.ci',
+    structure_db_id: 27,
     note: 4.6,
     avis: 178,
     partenaire: true,
@@ -405,6 +416,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 21 24 72 72',
     email: 'ica@cardio.ci',
     medmap_email: 'ica@medmap.ci',
+    structure_db_id: 28,
     note: 4.9,
     avis: 412,
     partenaire: true,
@@ -436,6 +448,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 22 41 50 50',
     email: 'deuxplateaux@clinique.ci',
     medmap_email: 'clinique.deuxplateaux@medmap.ci',
+    structure_db_id: 29,
     note: 4.5,
     avis: 267,
     partenaire: true,
@@ -466,6 +479,7 @@ export const HOSPITALS: Hospital[] = [
     telephone: '+225 27 22 43 60 60',
     email: 'mere-enfant@riviera.ci',
     medmap_email: 'clinique.riviera@medmap.ci',
+    structure_db_id: 30,
     note: 4.8,
     avis: 532,
     partenaire: true,

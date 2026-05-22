@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Navbar from '@/components/layout/Navbar'
 import { useAuth } from '@/lib/auth-context'
 import { HOSPITALS, TYPE_LABELS, TYPE_COLORS } from '@/lib/hospitals-data'
-import { appointments as appointmentsApi, users as usersApi, wallet as walletApi, hospital as hospitalApi } from '@/lib/api'
+import { appointments as appointmentsApi, wallet as walletApi, hospital as hospitalApi } from '@/lib/api'
 import {
   ChevronLeft, Star, MapPin, Phone, Clock, Building2, Bed,
   Zap, Shield, CheckCircle, Calendar, ChevronRight, User,
@@ -92,21 +92,13 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ id: s
 
   useEffect(() => {
     if (!hospital) return
-    Promise.all([
-      usersApi.structures({ type: 'clinique' }),
-      walletApi.me().catch(() => null),
-    ]).then(([structures, w]) => {
-      const hospitalNom = hospital.nom.toLowerCase().trim()
-      console.log('[hospital] structures reçues:', structures.length, 'pour', hospital.nom, '| medmap_email:', hospital.medmap_email)
-      const match = structures.find((s: any) => {
-        if (hospital.medmap_email && s.structure?.email === hospital.medmap_email) return true
-        const sNom = (s.nom || s.structure?.nom || '').toLowerCase().trim()
-        return sNom === hospitalNom
-      })
-      console.log('[hospital] match trouvé:', match ? `structure_id=${match.structure_id ?? match.id}` : 'AUCUN')
-      if (match) setDbStructureId(match.structure_id ?? match.id)
+    // Use hardcoded structure_db_id if available (fastest path)
+    if (hospital.structure_db_id) {
+      setDbStructureId(hospital.structure_db_id)
+    }
+    walletApi.me().catch(() => null).then(w => {
       if (w) setWalletSolde(parseFloat(w.solde || 0))
-    }).catch((e) => console.error('[hospital] erreur fetch structures:', e))
+    })
   }, [hospital])
 
   useEffect(() => {
