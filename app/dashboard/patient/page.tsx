@@ -47,7 +47,7 @@ const SERVICE_CARDS = [
     label: 'Urgences',
     desc: 'SAMU · Pompiers · Ambulance',
     href: '/urgence',
-    img: '/images/doctor-patient.jpg',
+    img: '/images/samu.jpg',
     gradient: 'from-red-900/90 to-red-700/60',
     tag: 'SOS 24h/24',
     icon: Siren,
