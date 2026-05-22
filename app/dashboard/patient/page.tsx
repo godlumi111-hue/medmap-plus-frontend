@@ -20,8 +20,7 @@ const SERVICE_CARDS = [
     label: 'Médecins & Spécialistes',
     desc: 'Prenez rendez-vous en 30 secondes',
     href: '/medecins',
-    // médecin africain avec stéthoscope
-    img: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=800&auto=format&fit=crop&q=80',
+    img: '/images/doctor-team.jpg',
     gradient: 'from-teal-900/85 to-teal-700/50',
     tag: '14 spécialités',
     icon: Stethoscope,
@@ -30,8 +29,7 @@ const SERVICE_CARDS = [
     label: 'Hôpitaux & Cliniques',
     desc: 'Trouvez et réservez un établissement',
     href: '/hospitals',
-    // équipe médicale africaine
-    img: 'https://images.unsplash.com/photo-1551884170-09fb70a3a2ed?w=800&auto=format&fit=crop&q=80',
+    img: '/images/equipe.jpg',
     gradient: 'from-sky-900/85 to-sky-700/50',
     tag: '13 partenaires',
     icon: Building2,
@@ -40,8 +38,7 @@ const SERVICE_CARDS = [
     label: 'Pharmacies de garde',
     desc: 'Commander · livraison rapide 24h/24',
     href: '/pharmacies-garde',
-    // pharmacienne africaine
-    img: 'https://images.unsplash.com/photo-1576602976047-174e57a47881?w=800&auto=format&fit=crop&q=80',
+    img: '/images/pharmatie.jpg',
     gradient: 'from-emerald-900/85 to-emerald-700/50',
     tag: 'Ouverte maintenant',
     icon: Pill,
@@ -50,8 +47,7 @@ const SERVICE_CARDS = [
     label: 'Urgences',
     desc: 'SAMU · Pompiers · Ambulance',
     href: '/urgence',
-    // soignant africain aux urgences
-    img: 'https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b?w=800&auto=format&fit=crop&q=80',
+    img: '/images/doctor-patient.jpg',
     gradient: 'from-red-900/90 to-red-700/60',
     tag: 'SOS 24h/24',
     icon: Siren,
@@ -131,8 +127,8 @@ export default function PatientDashboard() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=1200&auto=format&fit=crop&q=85&fp-y=0.3"
-              alt="médecin africain"
+              src="/images/doctor-patient.jpg"
+              alt="médecin africain avec patient"
               className="absolute inset-0 w-full h-full object-cover object-top"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-teal-900/92 via-teal-800/70 to-transparent" />
