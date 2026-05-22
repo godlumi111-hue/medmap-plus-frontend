@@ -116,7 +116,7 @@ export default function TrackingPage({ params }: { params: Promise<{ id: string 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('medmap_token')}`,
+          Authorization: `Bearer ${sessionStorage.getItem('medmap_token')}`,
         },
         body: JSON.stringify({ event }),
       })

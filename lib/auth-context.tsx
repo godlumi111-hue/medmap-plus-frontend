@@ -53,24 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRoleCookie(stored.role)
     }
     setLoading(false)
-
-    // Sync auth state when another tab logs in/out
-    function onStorage(e: StorageEvent) {
-      if (e.key === 'medmap_user') {
-        if (e.newValue) {
-          try {
-            const u = JSON.parse(e.newValue)
-            setUser(u)
-            setRoleCookie(u.role)
-          } catch {}
-        } else {
-          setUser(null)
-          clearRoleCookie()
-        }
-      }
-    }
-    window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
   }, [])
 
   const login = useCallback(async (email: string, password: string): Promise<UserOut> => {

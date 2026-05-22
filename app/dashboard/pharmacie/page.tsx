@@ -416,7 +416,7 @@ export default function PharmacieDashboard() {
                                               method: 'POST',
                                               headers: {
                                                 'Content-Type': 'application/json',
-                                                Authorization: `Bearer ${localStorage.getItem('medmap_token')}`,
+                                                Authorization: `Bearer ${sessionStorage.getItem('medmap_token')}`,
                                               },
                                             })
                                             setOrders(prev => prev.map(o => o.id === cmd.id ? { ...o, livreur_statut: 'vers_patient', statut: 'en_route' } : o))

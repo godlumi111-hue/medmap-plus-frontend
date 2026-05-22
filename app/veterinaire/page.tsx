@@ -14,7 +14,7 @@ import {
 const ANIMALS_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1').replace('/v1', '')
 function getToken() {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem('medmap_token')
+  return sessionStorage.getItem('medmap_token')
 }
 async function fetchMyAnimals() {
   const res = await fetch(`${ANIMALS_URL}/animals/my`, {

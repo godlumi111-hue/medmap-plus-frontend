@@ -31,7 +31,7 @@ const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'
 
 function apiGet(path: string) {
   return fetch(`${BASE}${path}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('medmap_token')}` },
+    headers: { Authorization: `Bearer ${sessionStorage.getItem('medmap_token')}` },
   }).then(r => r.json())
 }
 
@@ -40,7 +40,7 @@ async function apiPost(path: string, body?: any) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('medmap_token')}`,
+      Authorization: `Bearer ${sessionStorage.getItem('medmap_token')}`,
     },
     body: body ? JSON.stringify(body) : undefined,
   })

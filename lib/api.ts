@@ -2,7 +2,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null
-  return localStorage.getItem('medmap_token')
+  return sessionStorage.getItem('medmap_token')
 }
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -678,21 +678,21 @@ export const walletAlias = {
 // ── Token helpers ──────────────────────────────────────────────────────────────
 
 export function saveToken(token: string) {
-  localStorage.setItem('medmap_token', token)
+  sessionStorage.setItem('medmap_token', token)
 }
 
 export function clearToken() {
-  localStorage.removeItem('medmap_token')
-  localStorage.removeItem('medmap_user')
+  sessionStorage.removeItem('medmap_token')
+  sessionStorage.removeItem('medmap_user')
 }
 
 export function saveUser(user: UserOut) {
-  localStorage.setItem('medmap_user', JSON.stringify(user))
+  sessionStorage.setItem('medmap_user', JSON.stringify(user))
 }
 
 export function getStoredUser(): UserOut | null {
   if (typeof window === 'undefined') return null
-  const raw = localStorage.getItem('medmap_user')
+  const raw = sessionStorage.getItem('medmap_user')
   if (!raw) return null
   try {
     return JSON.parse(raw)
