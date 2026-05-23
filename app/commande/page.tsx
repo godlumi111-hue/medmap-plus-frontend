@@ -25,7 +25,7 @@ const ORDER_STATUS: Record<string, {
   en_preparation: { label: 'En préparation', desc: 'La pharmacie prépare vos médicaments',                    color: 'bg-blue-50 text-blue-700 border-blue-200',           dot: 'bg-blue-500',    step: 2, icon: <Package className="w-4 h-4" /> },
   en_route:       { label: 'En route',        desc: 'Le livreur est en route vers vous',                      color: 'bg-violet-50 text-violet-700 border-violet-200',    dot: 'bg-violet-500',  step: 3, icon: <Truck className="w-4 h-4" /> },
   livre:          { label: 'Livré',           desc: 'Votre commande a été livrée',                            color: 'bg-teal-50 text-teal-700 border-teal-200',          dot: 'bg-teal-500',    step: 4, icon: <CheckCircle className="w-4 h-4" /> },
-  annule:         { label: 'Annulée',         desc: 'Cette commande a été annulée',                           color: 'bg-red-50 text-red-600 border-red-200',             dot: 'bg-red-400',     step: -1, icon: <XCircle className="w-4 h-4" /> },
+  annule:         { label: 'Annulée par la pharmacie', desc: 'Cette commande a été annulée. Le montant vous a été remboursé.', color: 'bg-red-50 text-red-600 border-red-200', dot: 'bg-red-400', step: -1, icon: <XCircle className="w-4 h-4" /> },
 }
 
 const STEPS = ['en_attente', 'confirme', 'en_preparation', 'en_route', 'livre']
@@ -386,16 +386,34 @@ function OrderCard({
               {/* Escrow status */}
               {order.paiement_statut && (
                 <div className={`flex items-center gap-2 rounded-xl p-3 ${
-                  order.paiement_statut === 'libere' ? 'bg-teal-50 border border-teal-100' : 'bg-amber-50 border border-amber-100'
+                  order.paiement_statut === 'libere'    ? 'bg-teal-50 border border-teal-100' :
+                  order.paiement_statut === 'rembourse' ? 'bg-blue-50 border border-blue-100' :
+                  'bg-amber-50 border border-amber-100'
                 }`}>
-                  <Shield className={`w-4 h-4 flex-shrink-0 ${order.paiement_statut === 'libere' ? 'text-teal-600' : 'text-amber-500'}`} />
+                  <Shield className={`w-4 h-4 flex-shrink-0 ${
+                    order.paiement_statut === 'libere'    ? 'text-teal-600' :
+                    order.paiement_statut === 'rembourse' ? 'text-blue-600' :
+                    'text-amber-500'
+                  }`} />
                   <div>
-                    <p className={`text-xs font-bold ${order.paiement_statut === 'libere' ? 'text-teal-800' : 'text-amber-800'}`}>
-                      Paiement {order.paiement_statut === 'libere' ? 'libéré ✓' : 'en escrow · sécurisé'}
+                    <p className={`text-xs font-bold ${
+                      order.paiement_statut === 'libere'    ? 'text-teal-800' :
+                      order.paiement_statut === 'rembourse' ? 'text-blue-800' :
+                      'text-amber-800'
+                    }`}>
+                      {order.paiement_statut === 'libere'    ? 'Paiement libéré ✓' :
+                       order.paiement_statut === 'rembourse' ? 'Remboursement effectué ✓' :
+                       'Paiement en escrow · sécurisé'}
                     </p>
-                    <p className={`text-xs ${order.paiement_statut === 'libere' ? 'text-teal-600' : 'text-amber-600'}`}>
+                    <p className={`text-xs ${
+                      order.paiement_statut === 'libere'    ? 'text-teal-600' :
+                      order.paiement_statut === 'rembourse' ? 'text-blue-600' :
+                      'text-amber-600'
+                    }`}>
                       {order.paiement_statut === 'libere'
                         ? `Pharmacie +${montantPharmacie.toLocaleString('fr-FR')} F · Livreur +${fraisLivraison.toLocaleString('fr-FR')} F · Commission ${commission.toLocaleString('fr-FR')} F`
+                        : order.paiement_statut === 'rembourse'
+                        ? `${parseFloat(order.montant_total || 0).toLocaleString('fr-FR')} FCFA reversés dans votre portefeuille`
                         : 'Sera libéré après votre confirmation de réception'}
                     </p>
                   </div>
