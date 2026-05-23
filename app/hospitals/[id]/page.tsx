@@ -47,12 +47,43 @@ const STATUT_ROOM_LABEL: Record<string, string> = {
   libre: 'Libre', occupee: 'Occupée', pause: 'Pause', fermee: 'Fermée',
 }
 
+function apiToHospital(s: any) {
+  const struct = s.structure || {}
+  const cp = s.clinic_profile || {}
+  return {
+    id: String(s.structure_id || s.id),
+    nom: s.nom || struct.nom || 'Établissement',
+    type: (struct.type || 'clinique') as any,
+    adresse: struct.adresse || '',
+    commune: struct.ville || '',
+    ville: struct.ville || 'Abidjan',
+    telephone: struct.telephone || '',
+    email: struct.email || '',
+    note: s.note ?? 4.0,
+    avis: 0,
+    partenaire: Boolean(s.partenaire),
+    urgence24h: Boolean(cp.urgence24h),
+    nombreLits: cp.nombre_lits || 0,
+    lat: struct.lat || 0, lng: struct.lng || 0,
+    description: `${s.nom || struct.nom} — ${struct.ville || 'Abidjan'}`,
+    services: cp.services || [],
+    specialites: [],
+    servicesAvecPrix: [],
+    tarifs: [{ label: 'Consultation générale', prix: 5000 }],
+    horaires: cp.horaires || 'Disponible',
+    ouvert: true,
+    structure_db_id: s.structure_id || s.id,
+  }
+}
+
 export default function HospitalDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
   const { user } = useAuth()
-  const hospital = HOSPITALS.find(h => h.id === id)
+  const staticHospital = HOSPITALS.find(h => h.id === id)
 
+  const [hospital, setHospital] = useState<any>(staticHospital || null)
+  const [hospitalLoading, setHospitalLoading] = useState(!staticHospital)
   const [dbStructureId, setDbStructureId] = useState<number | null>(null)
   const [walletSolde, setWalletSolde] = useState<number | null>(null)
 
@@ -90,16 +121,31 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ id: s
 
   const days = getNext7Days()
 
+  // Fetch from API if not in static data
   useEffect(() => {
-    if (!hospital) return
-    // Use hardcoded structure_db_id if available (fastest path)
-    if (hospital.structure_db_id) {
-      setDbStructureId(hospital.structure_db_id)
+    if (staticHospital) {
+      if (staticHospital.structure_db_id) setDbStructureId(staticHospital.structure_db_id)
+      walletApi.me().catch(() => null).then(w => { if (w) setWalletSolde(parseFloat(w.solde || 0)) })
+      return
     }
-    walletApi.me().catch(() => null).then(w => {
-      if (w) setWalletSolde(parseFloat(w.solde || 0))
-    })
-  }, [hospital])
+    const numericId = parseInt(id)
+    if (!isNaN(numericId)) {
+      setHospitalLoading(true)
+      import('@/lib/api').then(({ users }) => {
+        users.structure(numericId).then((s: any) => {
+          const h = apiToHospital(s)
+          setHospital(h)
+          setDbStructureId(numericId)
+        }).catch(() => {
+          setHospital(null)
+        }).finally(() => setHospitalLoading(false))
+      })
+      walletApi.me().catch(() => null).then(w => { if (w) setWalletSolde(parseFloat(w.solde || 0)) })
+    } else {
+      setHospitalLoading(false)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   useEffect(() => {
     if (user?.telephone && !immAge) {}
@@ -121,6 +167,17 @@ export default function HospitalDetailPage({ params }: { params: Promise<{ id: s
       .catch(() => {})
       .finally(() => setLiveLoading(false))
   }, [mode, dbStructureId]) // eslint-disable-line
+
+  if (hospitalLoading) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFB]">
+        <Navbar />
+        <div className="pt-16 flex items-center justify-center py-24">
+          <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+        </div>
+      </div>
+    )
+  }
 
   if (!hospital) {
     return (

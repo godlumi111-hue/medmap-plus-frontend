@@ -1,9 +1,10 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import Navbar from '@/components/layout/Navbar'
 import { PHARMACIES_GARDE, COMMISSION_RATE } from '@/lib/pharmacies-garde-data'
+import { pharmacies as pharmaciesApi } from '@/lib/api'
 import {
   Search, MapPin, Clock, Phone, Star, CheckCircle, ShoppingBag,
   ChevronRight, Shield, Pill, AlertCircle, Navigation,
@@ -22,9 +23,43 @@ export default function PharmaciesGardePage() {
   const [filterLivraison, setFilterLivraison] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [sortBy, setSortBy] = useState<'note' | 'distance' | 'meds'>('note')
+  const [apiPharmacies, setApiPharmacies] = useState<any[]>([])
+
+  useEffect(() => {
+    // Fetch all pharmacies (not just garde, so new registrations appear)
+    pharmaciesApi.list().then((data: any[]) => {
+      const staticIds = new Set(PHARMACIES_GARDE.map(p => p.id))
+      const newEntries = data
+        .filter((p: any) => {
+          const pid = p.id || p.structure_id
+          return !staticIds.has(pid)
+        })
+        .map((p: any) => ({
+          id: p.id || p.structure_id,
+          nom: p.nom || 'Pharmacie',
+          adresse: p.adresse || '',
+          commune: p.ville || '',
+          ville: p.ville || 'Abidjan',
+          telephone: p.telephone || '',
+          note: p.note ?? 4.0,
+          avis: 0,
+          partenaire: Boolean(p.partenaire),
+          garde: Boolean(p.garde),
+          horaires: 'Disponible',
+          ouvert: true,
+          lat: p.lat || 0,
+          lng: p.lng || 0,
+          medicamentsDisponibles: 0,
+          livraison: true,
+        }))
+      setApiPharmacies(newEntries)
+    }).catch(() => {})
+  }, [])
+
+  const allPharmacies = useMemo(() => [...PHARMACIES_GARDE, ...apiPharmacies], [apiPharmacies])
 
   const filtered = useMemo(() => {
-    let list = [...PHARMACIES_GARDE]
+    let list = [...allPharmacies]
     if (search) {
       const q = search.toLowerCase()
       list = list.filter(p =>
@@ -45,9 +80,9 @@ export default function PharmaciesGardePage() {
       return 0
     })
     return list
-  }, [search, filterCommune, filterGarde, filterOuvert, filterPartenaire, filterLivraison, sortBy])
+  }, [search, filterCommune, filterGarde, filterOuvert, filterPartenaire, filterLivraison, sortBy, allPharmacies])
 
-  const gardesOuvertes = PHARMACIES_GARDE.filter(p => p.garde && p.ouvert).length
+  const gardesOuvertes = allPharmacies.filter(p => p.garde && p.ouvert).length
   const activeFilters = [
     filterCommune !== 'Toutes',
     filterGarde, filterOuvert, filterPartenaire, filterLivraison,

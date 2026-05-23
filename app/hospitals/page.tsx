@@ -1,9 +1,10 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import Navbar from '@/components/layout/Navbar'
 import { HOSPITALS, COMMUNES, SPECIALITES_FILTER, TYPE_LABELS, TYPE_COLORS } from '@/lib/hospitals-data'
+import { users } from '@/lib/api'
 import {
   Search, MapPin, Star, Phone, Clock, ChevronRight, Building2,
   Heart, Shield, Zap, Filter, CheckCircle, Bed, Users,
@@ -19,6 +20,36 @@ const FILTERS_TYPE = [
   { value: 'centre', label: 'Centres' },
 ]
 
+function apiStructureToHospital(s: any) {
+  const struct = s.structure || {}
+  const cp = s.clinic_profile || {}
+  return {
+    id: String(s.structure_id || s.id),
+    _apiId: s.structure_id || s.id,
+    nom: s.nom || struct.nom || 'Établissement',
+    type: (struct.type || 'clinique') as any,
+    adresse: struct.adresse || '',
+    commune: struct.ville || '',
+    ville: struct.ville || 'Abidjan',
+    telephone: struct.telephone || '',
+    email: struct.email || '',
+    note: s.note ?? 4.0,
+    avis: 0,
+    partenaire: Boolean(s.partenaire),
+    urgence24h: Boolean(cp.urgence24h),
+    nombreLits: cp.nombre_lits || 0,
+    lat: struct.lat || 0,
+    lng: struct.lng || 0,
+    description: `${s.nom || struct.nom} — ${struct.ville || 'Abidjan'}`,
+    services: cp.services || [],
+    specialites: [],
+    tarifs: [],
+    horaires: cp.horaires || 'Disponible',
+    ouvert: true,
+    partenaire_confirmed: Boolean(s.partenaire),
+  }
+}
+
 export default function HospitalsPage() {
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('all')
@@ -29,16 +60,30 @@ export default function HospitalsPage() {
   const [filterPartenaire, setFilterPartenaire] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [sortBy, setSortBy] = useState<'note' | 'distance' | 'nom'>('note')
+  const [apiHospitals, setApiHospitals] = useState<any[]>([])
+
+  useEffect(() => {
+    users.structures({ type: 'clinique' }).then((data: any[]) => {
+      // Only add API entries not already represented in static HOSPITALS by structure_db_id
+      const staticDbIds = new Set(HOSPITALS.map((h: any) => h.structure_db_id).filter(Boolean))
+      const newEntries = data
+        .filter((s: any) => !staticDbIds.has(s.structure_id) && !staticDbIds.has(s.id))
+        .map(apiStructureToHospital)
+      setApiHospitals(newEntries)
+    }).catch(() => {})
+  }, [])
+
+  const allHospitals = useMemo(() => [...HOSPITALS, ...apiHospitals], [apiHospitals])
 
   const filtered = useMemo(() => {
-    let list = [...HOSPITALS]
+    let list = [...allHospitals]
     if (search) {
       const q = search.toLowerCase()
       list = list.filter(h =>
         h.nom.toLowerCase().includes(q) ||
         h.commune.toLowerCase().includes(q) ||
-        h.services.some(s => s.toLowerCase().includes(q)) ||
-        h.specialites.some(s => s.toLowerCase().includes(q))
+        (h.services || []).some((s: string) => s.toLowerCase().includes(q)) ||
+        (h.specialites || []).some((s: string) => s.toLowerCase().includes(q))
       )
     }
     if (filterType !== 'all') list = list.filter(h => h.type === filterType)
@@ -54,7 +99,7 @@ export default function HospitalsPage() {
       return a.nom.localeCompare(b.nom)
     })
     return list
-  }, [search, filterType, filterCommune, filterSpecialite, filterUrgence, filterOuvert, filterPartenaire, sortBy])
+  }, [search, filterType, filterCommune, filterSpecialite, filterUrgence, filterOuvert, filterPartenaire, sortBy, allHospitals])
 
   const activeFilterCount = [
     filterType !== 'all',
@@ -311,12 +356,12 @@ export default function HospitalsPage() {
 
                             {/* Specialties */}
                             <div className="flex flex-wrap gap-1 mt-2">
-                              {hospital.specialites.slice(0, 4).map(s => (
+                              {(hospital.specialites || []).slice(0, 4).map((s: string) => (
                                 <span key={s} className="text-[10px] px-2 py-0.5 bg-gray-50 text-gray-500 rounded-full border border-gray-100">
                                   {s}
                                 </span>
                               ))}
-                              {hospital.specialites.length > 4 && (
+                              {(hospital.specialites || []).length > 4 && (
                                 <span className="text-[10px] px-2 py-0.5 bg-gray-50 text-gray-400 rounded-full border border-gray-100">
                                   +{hospital.specialites.length - 4}
                                 </span>
