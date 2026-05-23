@@ -132,7 +132,7 @@ export default function AdminDashboardPage() {
   async function toggleUser(id: number, current: boolean) {
     setTogglingUser(id)
     try {
-      await adminApi.setActive(id, !current)
+      await adminApi.activateUser(id, !current)
       setAllUsers(prev => prev.map(u => u.id === id ? { ...u, is_active: !current } : u))
     } catch {}
     setTogglingUser(null)
@@ -141,7 +141,7 @@ export default function AdminDashboardPage() {
   async function verifyUser(id: number) {
     setVerifyingUser(id)
     try {
-      await adminApi.verify(id)
+      await adminApi.verifyUser(id)
       setAllUsers(prev => prev.map(u => u.id === id ? { ...u, is_verified: true } : u))
     } catch {}
     setVerifyingUser(null)
@@ -150,7 +150,7 @@ export default function AdminDashboardPage() {
   async function verifyDoctor(id: number) {
     setVerifyingDoc(id)
     try {
-      await adminApi.verify(id)
+      await adminApi.verifyUser(id)
       setDoctors(prev => prev.map(d => d.id === id ? { ...d, is_verified: true } : d))
     } catch {}
     setVerifyingDoc(null)
