@@ -637,7 +637,7 @@ export default function HomePage() {
             <motion.div {...fade()} className="relative order-2 lg:order-1">
               <div className="rounded-3xl overflow-hidden aspect-[4/3] shadow-2xl">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=900&auto=format&fit=crop&q=80" alt="Professionnels de santé" className="w-full h-full object-cover" loading="lazy" />
+                <img src="/images/laboratoire.jpg" alt="Laboratoire médical MedMap+" className="w-full h-full object-cover" loading="lazy" />
                 <div className="absolute inset-0 bg-gradient-to-t from-teal-900/30 to-transparent" />
               </div>
               <div className="absolute -top-6 -right-6 bg-white rounded-2xl p-5 shadow-2xl border border-slate-100">
