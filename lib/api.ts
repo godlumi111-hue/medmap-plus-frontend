@@ -182,6 +182,8 @@ export const wallet = {
     request<any>('/wallet/deposit', { method: 'POST', body: JSON.stringify({ methode, montant_demande }) }),
   confirmDeposit: (id: number) =>
     request<any>(`/wallet/deposit/${id}/confirm`, { method: 'POST' }),
+  cancelDeposit: (id: number) =>
+    request<any>(`/wallet/deposit/${id}/cancel`, { method: 'POST' }),
   deposits: () => request<any[]>('/wallet/deposits'),
   withdraw: (methode: string, montant: number, telephone: string) =>
     request<any>('/wallet/withdraw', { method: 'POST', body: JSON.stringify({ methode, montant, telephone }) }),

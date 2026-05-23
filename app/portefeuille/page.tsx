@@ -102,6 +102,7 @@ export default function PortefeuillePage() {
   const [pendingDeposit, setPendingDeposit] = useState<any>(null)
   const [depositLoading, setDepositLoading] = useState(false)
   const [depositError, setDepositError]   = useState('')
+  const [cancellingDeposit, setCancellingDeposit] = useState(false)
 
   // Withdrawal form state
   const [wMethod, setWMethod]             = useState('wave')
@@ -185,6 +186,21 @@ export default function PortefeuillePage() {
         setDepositStep('step3_wait')
       }
     }, 2000)
+  }
+
+  async function handleCancelDeposit() {
+    if (!pendingDeposit) return
+    setCancellingDeposit(true)
+    try {
+      await wallet.cancelDeposit(pendingDeposit.id)
+      setDepositStep('step5_done')
+      setPendingDeposit({ ...pendingDeposit, cancelled: true })
+      await fetchData()
+    } catch (e: any) {
+      setDepositError(e.message || 'Erreur lors de l\'annulation')
+    } finally {
+      setCancellingDeposit(false)
+    }
   }
 
   function openWithdraw() {
@@ -710,15 +726,22 @@ export default function PortefeuillePage() {
                       <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4">
                         <div className="flex items-center gap-2 mb-2">
                           <Smartphone className="w-5 h-5 text-blue-600" />
-                          <p className="font-bold text-blue-800 text-sm">Confirmation requise</p>
+                          <p className="font-bold text-blue-800 text-sm">Confirmation requise sur {methodMeta?.label}</p>
                         </div>
                         <p className="text-sm text-blue-700 mb-4">
-                          Une demande de confirmation a été envoyée sur votre application <strong>{methodMeta?.label}</strong>. Ouvrez l'application et confirmez la transaction.
+                          Une demande de paiement a été envoyée sur votre application <strong>{methodMeta?.label}</strong>. Confirmez ou refusez la transaction ci-dessous.
                         </p>
-                        <button onClick={simulateConfirmation}
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
-                          <CheckCircle className="w-4 h-4" /> Simuler la confirmation {methodMeta?.label}
-                        </button>
+                        <div className="grid grid-cols-2 gap-3">
+                          <button onClick={handleCancelDeposit} disabled={cancellingDeposit}
+                            className="py-3 rounded-xl font-bold text-sm border-2 border-red-300 text-red-600 bg-white hover:bg-red-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                            {cancellingDeposit ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                            Refuser
+                          </button>
+                          <button onClick={simulateConfirmation}
+                            className="py-3 rounded-xl font-bold text-sm bg-green-600 hover:bg-green-700 text-white transition-all flex items-center justify-center gap-2">
+                            <CheckCircle className="w-4 h-4" /> Confirmer
+                          </button>
+                        </div>
                       </div>
                     )}
 
