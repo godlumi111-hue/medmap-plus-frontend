@@ -153,6 +153,12 @@ export const pharmacies = {
     request<any>(`/pharmacies/orders/${orderId}/accept-delivery`, { method: 'POST' }),
   updateLivreurStatus: (orderId: number, livreur_statut: string) =>
     request<any>(`/pharmacies/orders/${orderId}/livreur-status`, { method: 'PUT', body: JSON.stringify({ livreur_statut }) }),
+  myStock: () => request<any[]>('/pharmacies/my/stock'),
+  stockEntree: (data: { medicine_id: number; quantite: number; prix_local?: number; motif?: string }) =>
+    request<any>('/pharmacies/my/stock/entree', { method: 'POST', body: JSON.stringify(data) }),
+  stockSortie: (data: { medicine_id: number; quantite: number; motif?: string }) =>
+    request<any>('/pharmacies/my/stock/sortie', { method: 'POST', body: JSON.stringify(data) }),
+  stockMovements: () => request<any[]>('/pharmacies/my/stock/movements'),
 }
 
 // ── Medicines ──────────────────────────────────────────────────────────────────

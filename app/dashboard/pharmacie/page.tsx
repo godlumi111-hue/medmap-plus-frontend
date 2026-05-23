@@ -12,6 +12,7 @@ import {
   CheckCircle, XCircle, ChevronRight, Loader2, MapPin,
   Phone, Moon, MessageCircle, Truck, RefreshCw, User,
   TrendingUp, AlertCircle, ChevronDown, ChevronUp, Navigation,
+  Search, Plus, Minus, ArrowDownCircle, ArrowUpCircle, BarChart3,
 } from 'lucide-react'
 
 const ORDER_STATUS: Record<string, {
@@ -39,6 +40,18 @@ export default function PharmacieDashboard() {
   const [expandedOrder, setExpandedOrder] = useState<number | null>(null)
   const [chat, setChat] = useState<{ orderId: number; patientUserId: number; patientName: string } | null>(null)
   const [updatingId, setUpdatingId] = useState<number | null>(null)
+  const [mainView, setMainView] = useState<'commandes' | 'stock'>('commandes')
+
+  // Stock management states
+  const [stock, setStock] = useState<any[]>([])
+  const [stockMovements, setStockMovements] = useState<any[]>([])
+  const [stockSearch, setStockSearch] = useState('')
+  const [stockLoading, setStockLoading] = useState(false)
+  const [stockUpdating, setStockUpdating] = useState<number | null>(null)
+  const [stockModal, setStockModal] = useState<{ med: any; type: 'entree' | 'sortie' } | null>(null)
+  const [stockQty, setStockQty] = useState('')
+  const [stockMotif, setStockMotif] = useState('')
+  const [stockErr, setStockErr] = useState('')
 
   const loadData = useCallback(() => {
     Promise.allSettled([
@@ -52,9 +65,23 @@ export default function PharmacieDashboard() {
     }).finally(() => setLoading(false))
   }, [])
 
+  const loadStock = useCallback(async () => {
+    setStockLoading(true)
+    try {
+      const [s, m] = await Promise.all([pharmacies.myStock(), pharmacies.stockMovements()])
+      setStock(s)
+      setStockMovements(m)
+    } catch {}
+    setStockLoading(false)
+  }, [])
+
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  useEffect(() => {
+    if (mainView === 'stock') loadStock()
+  }, [mainView, loadStock])
 
   // Socket.io real-time updates
   useEffect(() => {
@@ -103,6 +130,40 @@ export default function PharmacieDashboard() {
     } catch {}
     finally { setUpdatingId(null) }
   }
+
+  async function handleStockAction() {
+    if (!stockModal || !stockQty || parseInt(stockQty) <= 0) {
+      setStockErr('Quantité invalide')
+      return
+    }
+    setStockErr('')
+    setStockUpdating(stockModal.med.id)
+    try {
+      if (stockModal.type === 'entree') {
+        await pharmacies.stockEntree({ medicine_id: stockModal.med.id, quantite: parseInt(stockQty), motif: stockMotif || undefined })
+      } else {
+        await pharmacies.stockSortie({ medicine_id: stockModal.med.id, quantite: parseInt(stockQty), motif: stockMotif || undefined })
+      }
+      setStockModal(null)
+      setStockQty('')
+      setStockMotif('')
+      await loadStock()
+    } catch (e: any) {
+      setStockErr(e.message || 'Erreur')
+    }
+    setStockUpdating(null)
+  }
+
+  function stockStatus(qty: number) {
+    if (qty === 0) return { label: 'Rupture', color: 'bg-red-100 text-red-700 border-red-200' }
+    if (qty <= 10) return { label: 'Faible', color: 'bg-amber-100 text-amber-700 border-amber-200' }
+    return { label: 'Disponible', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' }
+  }
+
+  const filteredStock = stock.filter(m =>
+    !stockSearch || m.nom.toLowerCase().includes(stockSearch.toLowerCase()) ||
+    (m.categorie || '').toLowerCase().includes(stockSearch.toLowerCase())
+  )
 
   const filteredOrders = orders.filter(o => {
     if (tab === 'all') return true
@@ -202,6 +263,45 @@ export default function PharmacieDashboard() {
 
         <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
 
+          {/* Main view tabs */}
+          <div className="flex gap-2">
+            {([
+              { key: 'commandes', label: 'Commandes', icon: ShoppingBag },
+              { key: 'stock',     label: 'Gestion du stock', icon: BarChart3 },
+            ] as const).map(({ key, label, icon: Icon }) => (
+              <button key={key} onClick={() => setMainView(key)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                  mainView === key
+                    ? 'bg-teal-600 text-white shadow-md'
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-teal-300 hover:text-teal-600'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+                {key === 'commandes' && newCount > 0 && (
+                  <span className={`min-w-[18px] h-[18px] rounded-full text-[10px] flex items-center justify-center px-1 ${mainView === key ? 'bg-white/30 text-white' : 'bg-red-100 text-red-700'}`}>
+                    {newCount}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {mainView === 'stock' && (
+            <StockPanel
+              stock={filteredStock}
+              movements={stockMovements}
+              loading={stockLoading}
+              search={stockSearch}
+              onSearch={setStockSearch}
+              onRefresh={loadStock}
+              onEntree={med => { setStockModal({ med, type: 'entree' }); setStockQty(''); setStockMotif(''); setStockErr('') }}
+              onSortie={med => { setStockModal({ med, type: 'sortie' }); setStockQty(''); setStockMotif(''); setStockErr('') }}
+              stockStatus={stockStatus}
+            />
+          )}
+
+          {mainView === 'commandes' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             {/* Orders panel */}
@@ -508,8 +608,65 @@ export default function PharmacieDashboard() {
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
+
+      {/* Stock entry/exit modal */}
+      <AnimatePresence>
+        {stockModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+            onClick={e => { if (e.target === e.currentTarget) setStockModal(null) }}
+          >
+            <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4"
+            >
+              <div className={`flex items-center gap-2 font-bold text-lg ${stockModal.type === 'entree' ? 'text-emerald-700' : 'text-red-700'}`}>
+                {stockModal.type === 'entree'
+                  ? <ArrowDownCircle className="w-5 h-5" />
+                  : <ArrowUpCircle className="w-5 h-5" />}
+                {stockModal.type === 'entree' ? 'Entrée stock' : 'Sortie stock'}
+              </div>
+              <div className="bg-gray-50 rounded-xl px-4 py-3">
+                <p className="font-semibold text-gray-900 text-sm">{stockModal.med.nom}</p>
+                <p className="text-xs text-gray-500 mt-0.5">Stock actuel : {stockModal.med.stock_local} unité{stockModal.med.stock_local !== 1 ? 's' : ''}</p>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-600 mb-1 block">Quantité *</label>
+                <input
+                  type="number" min="1" value={stockQty}
+                  onChange={e => setStockQty(e.target.value)}
+                  placeholder="Ex: 50"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-600 mb-1 block">Motif (optionnel)</label>
+                <input
+                  type="text" value={stockMotif}
+                  onChange={e => setStockMotif(e.target.value)}
+                  placeholder={stockModal.type === 'entree' ? 'Ex: Livraison fournisseur' : 'Ex: Vente comptoir'}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+              {stockErr && <p className="text-xs text-red-600 font-medium">{stockErr}</p>}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <button onClick={() => setStockModal(null)}
+                  className="py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                  Annuler
+                </button>
+                <button onClick={handleStockAction} disabled={!!stockUpdating}
+                  className={`py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-50 ${
+                    stockModal.type === 'entree' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'
+                  }`}>
+                  {stockUpdating ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Confirmer'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Conversation panel */}
       {chat && user && (
@@ -524,6 +681,138 @@ export default function PharmacieDashboard() {
           contextLabel={`Commande #${chat.orderId}`}
         />
       )}
+    </div>
+  )
+}
+
+// ─── Stock Panel Component ─────────────────────────────────────────────────────
+
+function StockPanel({ stock, movements, loading, search, onSearch, onRefresh, onEntree, onSortie, stockStatus }: {
+  stock: any[]; movements: any[]; loading: boolean; search: string;
+  onSearch: (s: string) => void; onRefresh: () => void;
+  onEntree: (m: any) => void; onSortie: (m: any) => void;
+  stockStatus: (qty: number) => { label: string; color: string };
+}) {
+  const [showMovements, setShowMovements] = useState(false)
+
+  return (
+    <div className="space-y-4">
+      {/* Search + refresh bar */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text" value={search} onChange={e => onSearch(e.target.value)}
+            placeholder="Rechercher un médicament…"
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white"
+          />
+        </div>
+        <button onClick={onRefresh} className="p-2.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 transition-colors" title="Actualiser">
+          <RefreshCw className={`w-4 h-4 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+
+      {/* Stock list */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between">
+          <h3 className="font-bold text-gray-900 text-sm">Médicaments en stock</h3>
+          <span className="text-xs text-gray-400">{stock.length} médicament{stock.length !== 1 ? 's' : ''}</span>
+        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-7 h-7 text-teal-500 animate-spin" />
+          </div>
+        ) : stock.length === 0 ? (
+          <div className="text-center py-12">
+            <Package className="w-10 h-10 text-gray-200 mx-auto mb-2" />
+            <p className="text-sm text-gray-400 font-medium">Aucun médicament trouvé</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {stock.map(med => {
+              const st = stockStatus(med.stock_local)
+              return (
+                <div key={med.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50/50 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{med.nom}</p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.color}`}>
+                        {st.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-400">
+                      <span>{med.categorie}</span>
+                      <span className="font-semibold text-gray-700">{med.prix ? `${med.prix.toLocaleString('fr-FR')} F` : '—'}</span>
+                      <span className="font-bold text-gray-900">{med.stock_local} unité{med.stock_local !== 1 ? 's' : ''}</span>
+                    </div>
+                    {(med.derniere_entree || med.derniere_sortie) && (
+                      <div className="flex gap-3 mt-0.5 text-[10px] text-gray-400">
+                        {med.derniere_entree && <span>↓ {new Date(med.derniere_entree).toLocaleDateString('fr-FR')}</span>}
+                        {med.derniere_sortie && <span>↑ {new Date(med.derniere_sortie).toLocaleDateString('fr-FR')}</span>}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    <button onClick={() => onEntree(med)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition-all border border-emerald-200">
+                      <Plus className="w-3 h-3" /> Entrée
+                    </button>
+                    <button onClick={() => onSortie(med)} disabled={med.stock_local === 0}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-xs font-bold transition-all border border-red-200 disabled:opacity-40 disabled:cursor-not-allowed">
+                      <Minus className="w-3 h-3" /> Sortie
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Movement history */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <button
+          onClick={() => setShowMovements(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+        >
+          <h3 className="font-bold text-gray-900 text-sm">Historique des mouvements</h3>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">{movements.length} entrée{movements.length !== 1 ? 's' : ''}</span>
+            {showMovements ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+          </div>
+        </button>
+        <AnimatePresence>
+          {showMovements && (
+            <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+              {movements.length === 0 ? (
+                <p className="text-center text-xs text-gray-400 py-6">Aucun mouvement enregistré</p>
+              ) : (
+                <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
+                  {movements.map(m => (
+                    <div key={m.id} className="flex items-center gap-3 px-4 py-2.5">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${m.type === 'entree' ? 'bg-emerald-100' : 'bg-red-100'}`}>
+                        {m.type === 'entree'
+                          ? <ArrowDownCircle className="w-3.5 h-3.5 text-emerald-600" />
+                          : <ArrowUpCircle className="w-3.5 h-3.5 text-red-600" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-800">{m.medicine_nom}</p>
+                        {m.motif && <p className="text-[10px] text-gray-400">{m.motif}</p>}
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className={`text-xs font-bold ${m.type === 'entree' ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {m.type === 'entree' ? '+' : '-'}{m.quantite}
+                        </p>
+                        <p className="text-[10px] text-gray-400">{new Date(m.created_at).toLocaleDateString('fr-FR')}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   )
 }
